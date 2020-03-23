@@ -14,7 +14,7 @@ def word_tokenize(tokens):
 
 class SQuAD():
     def __init__(self, args):
-        path = '.data/squad'
+        path = 'data'
         dataset_path = path + '/torchtext/'
         train_examples_path = dataset_path + 'train_examples.pt'
         dev_examples_path = dataset_path + 'dev_examples.pt'
