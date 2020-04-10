@@ -35,6 +35,9 @@ def main():
     parser.add_argument('--train-batch-size', default=60, type=int)
     parser.add_argument('--train-file', default='train-v2.0.json')
     parser.add_argument('--word-dim', default=100, type=int)
+    parser.add_argument('--n-head', default=4, type=int)
+    parser.add_argument('--kqv-dim', default=100, type=int)
+    parser.add_argument('--max-len', default=300, type=int)
     args = parser.parse_args()
 
     print('loading SQuAD data...')

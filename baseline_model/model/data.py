@@ -24,13 +24,15 @@ class SQuAD():
             self.preprocess_file('{}/{}'.format(path, args.train_file), create_question=True)
         if not os.path.exists('{}/{}l'.format(path, args.dev_file)):
             self.preprocess_file('{}/{}'.format(path, args.dev_file))
+        
+        self.max_len = args.max_len
 
         self.RAW = data.RawField()
         # explicit declaration for torchtext compatibility
         self.RAW.is_target = False
         self.CHAR_NESTING = data.Field(batch_first=True, tokenize=list, lower=True)
-        self.CHAR = data.NestedField(self.CHAR_NESTING, tokenize=word_tokenize)
-        self.WORD = data.Field(batch_first=True, tokenize=word_tokenize, lower=True, include_lengths=True)
+        self.CHAR = data.NestedField(self.CHAR_NESTING, tokenize=word_tokenize, fix_length=self.max_len)
+        self.WORD = data.Field(batch_first=True, tokenize=word_tokenize, lower=True, include_lengths=True, fix_length=self.max_len)
         self.LABEL = data.Field(sequential=False, unk_token=None, use_vocab=False)
 
         dict_fields = {'id': ('id', self.RAW),
@@ -90,7 +92,7 @@ class SQuAD():
             sort_key=lambda x: len(x.c_word)
         )
         
-    def preprocess_file(path, create_question=False):
+    def preprocess_file(self, path, create_question=False):
         dump = []
         questions = []
         alignment_problems = 0
@@ -104,6 +106,10 @@ class SQuAD():
             for article in tqdm(json_data):
                 for paragraph in article['paragraphs']:
                     context = paragraph['context']
+                    cur_context_len = len(word_tokenize(context))
+                    if cur_context_len > self.max_len:
+                        continue
+                    
                     tokens = word_tokenize(context)
                     for qa in paragraph['qas']:
                         id = qa['id']
