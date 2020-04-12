@@ -18,16 +18,16 @@ class SQuAD():
         dataset_path = path + '/torchtext/'
         train_examples_path = dataset_path + 'train_examples.pt'
         dev_examples_path = dataset_path + 'dev_examples.pt'
+        
+        self.max_len_context = args.max_len_context
+        self.max_len_question = args.max_len_question
+        self.max_len_answer = args.max_len_answer
 
         print("preprocessing data files...")
         if not os.path.exists('{}/{}l'.format(path, args.train_file)):
             self.preprocess_file('{}/{}'.format(path, args.train_file), create_question=True)
         if not os.path.exists('{}/{}l'.format(path, args.dev_file)):
             self.preprocess_file('{}/{}'.format(path, args.dev_file))
-        
-        self.max_len_context = args.max_len_context
-        self.max_len_question = args.max_len_question
-        self.max_len_answer = args.max_len_answer
 
         self.RAW = data.RawField()
 
