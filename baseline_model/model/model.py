@@ -125,8 +125,10 @@ class SelfAttention(nn.Module):
         return out
     
 class EncoderBlock(nn.Module):
-    
+    pass
+
 class Decoder(nn.Module):
+    pass
 
 class Baseline(nn.Module):
     def __init__(self, args, pretrained):
