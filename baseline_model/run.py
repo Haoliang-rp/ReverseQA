@@ -22,7 +22,6 @@ def main():
     parser.add_argument('--char-dim', default=8, type=int)
     parser.add_argument('--char-channel-width', default=5, type=int)
     parser.add_argument('--char-channel-size', default=100, type=int)
-    parser.add_argument('--context-threshold', default=400, type=int)
     parser.add_argument('--dev-batch-size', default=100, type=int)
     parser.add_argument('--dev-file', default='dev-v2.0.json')
     parser.add_argument('--dropout', default=0.2, type=float)

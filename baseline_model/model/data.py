@@ -30,22 +30,32 @@ class SQuAD():
         self.max_len_answer = args.max_len_answer
 
         self.RAW = data.RawField()
-        # explicit declaration for torchtext compatibility
+
         self.RAW.is_target = False
         self.CHAR_NESTING = data.Field(batch_first=True, tokenize=list, lower=True)
-        self.CHAR = data.NestedField(self.CHAR_NESTING, tokenize=word_tokenize, fix_length=self.max_len)
-        self.WORD = data.Field(batch_first=True, tokenize=word_tokenize, lower=True, include_lengths=True, fix_length=self.max_len)
+        
+        self.CHAR = data.NestedField(self.CHAR_NESTING, tokenize=word_tokenize)
+        self.WORD = data.Field(batch_first=True, tokenize=word_tokenize, lower=True, include_lengths=True)
+        
+        self.WORD_QUESTION = data.Field(batch_first=True, tokenize=word_tokenize, lower=True, include_lengths=True, init_token = "<sos>", eos_token = "<eos>")
         self.LABEL = data.Field(sequential=False, unk_token=None, use_vocab=False)
 
-        dict_fields = {'id': ('id', self.RAW),
-                       's_idx': ('s_idx', self.LABEL),
-                       'e_idx': ('e_idx', self.LABEL),
-                       'context': [('c_word', self.WORD), ('c_char', self.CHAR)],
-                       'question': [('q_word', self.WORD), ('q_char', self.CHAR)]}
+        dict_fields = {
+                'id': ('id', self.RAW),
+                's_idx': ('s_idx', self.LABEL),
+                'e_idx': ('e_idx', self.LABEL),
+                'context': [('c_word', self.WORD), ('c_char', self.CHAR)],
+                'question': ('q_word', self.WORD),
+                'answer': [('q_word', self.WORD), ('q_char', self.CHAR)]
+                }
 
-        list_fields = [('id', self.RAW), ('s_idx', self.LABEL), ('e_idx', self.LABEL),
-                       ('c_word', self.WORD), ('c_char', self.CHAR),
-                       ('q_word', self.WORD), ('q_char', self.CHAR)]
+        list_fields = [
+                ('id', self.RAW), 
+                ('s_idx', self.LABEL), ('e_idx', self.LABEL),
+                ('c_word', self.WORD), ('c_char', self.CHAR),
+                ('q_word', self.WORD), 
+                ('a_word', self.WORD), ('a_char', self.CHAR)
+                ]
         
         if os.path.exists(dataset_path):
             print("loading splits...")
@@ -67,13 +77,10 @@ class SQuAD():
             torch.save(self.train.examples, train_examples_path)
             torch.save(self.dev.examples, dev_examples_path)
 
-        #cut too long context in the training set for efficiency.
-        if args.context_threshold > 0:
-            self.train.examples = [e for e in self.train.examples if len(e.c_word) <= args.context_threshold]
-
         print("building vocab...")
         self.CHAR.build_vocab(self.train, self.dev)
         self.WORD.build_vocab(self.train, self.dev, vectors=GloVe(name='6B', dim=args.word_dim))
+        self.WORD_QUESTION.build_vocab(train_data_in, dev_data_in, vectors=GloVe(name='6B', dim=word_dim))
 
         print("building iterators...")
         device = torch.device("cuda:{}".format(args.gpu) if torch.cuda.is_available() else "cpu")
