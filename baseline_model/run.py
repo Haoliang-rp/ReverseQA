@@ -37,7 +37,9 @@ def main():
     parser.add_argument('--word-dim', default=100, type=int)
     parser.add_argument('--n-head', default=4, type=int)
     parser.add_argument('--kqv-dim', default=100, type=int)
-    parser.add_argument('--max-len', default=300, type=int)
+    parser.add_argument('--max-len-context', default=300, type=int)
+    parser.add_argument('--max-len-answer', default=30, type=int)
+    parser.add_argument('--max-len-question', default=30, type=int)
     args = parser.parse_args()
 
     print('loading SQuAD data...')

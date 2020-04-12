@@ -25,7 +25,9 @@ class SQuAD():
         if not os.path.exists('{}/{}l'.format(path, args.dev_file)):
             self.preprocess_file('{}/{}'.format(path, args.dev_file))
         
-        self.max_len = args.max_len
+        self.max_len_context = args.max_len_context
+        self.max_len_question = args.max_len_question
+        self.max_len_answer = args.max_len_answer
 
         self.RAW = data.RawField()
         # explicit declaration for torchtext compatibility
@@ -106,14 +108,19 @@ class SQuAD():
             for article in tqdm(json_data):
                 for paragraph in article['paragraphs']:
                     context = paragraph['context']
+                    
                     cur_context_len = len(word_tokenize(context))
-                    if cur_context_len > self.max_len:
+                    if cur_context_len > self.max_len_context:
                         continue
                     
                     tokens = word_tokenize(context)
                     for qa in paragraph['qas']:
                         id = qa['id']
                         question = qa['question']
+                        
+                        cur_question_len = len(word_tokenize(question))
+                        if cur_question_len > self.max_len_question:
+                            continue
                         
                         if create_question:
                             questions.append(question)
@@ -124,6 +131,11 @@ class SQuAD():
                             
                         for ans in qa['answers']:
                             answer = ans['text']
+                            
+                            cur_answer_len = len(word_tokenize(question))
+                            if cur_answer_len > self.max_len_answer:
+                                continue
+                            
                             s_idx = ans['answer_start']
                             e_idx = s_idx + len(answer)
                             
