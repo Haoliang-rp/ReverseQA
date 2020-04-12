@@ -7,14 +7,14 @@ from torch import nn, optim
 from tensorboardX import SummaryWriter
 from time import gmtime, strftime
 
-from model.model import BiDAF
+from model.model import Baseline
 from model.data import SQuAD
-from model.ema import EMA
-import evaluate
+#from model.ema import EMA
+#import evaluate
 
 def train(args, data):
     device = torch.device(f"cuda:{args.gpu}" if torch.cuda.is_available() else "cpu")
-    model = BiDAF(args, data.WORD.vocab.vectors).to(device)
+    model = Baseline(args, data.WORD.vocab.vectors).to(device)
     print('end of the test')
 
 def main():
