@@ -37,25 +37,28 @@ class SQuAD():
         self.CHAR = data.NestedField(self.CHAR_NESTING, tokenize=word_tokenize)
         self.WORD = data.Field(batch_first=True, tokenize=word_tokenize, lower=True, include_lengths=True)
         
-        self.WORD_QUESTION = data.Field(batch_first=True, tokenize=word_tokenize, lower=True, include_lengths=True, init_token = "<sos>", eos_token = "<eos>")
+        self.CHAR_NESTING_DECODER = data.Field(batch_first=True, tokenize=list, lower=True)
+        self.CHAR_DECODER = data.NestedField(self.CHAR_NESTING_DECODER, tokenize=word_tokenize, init_token = "<sos>", eos_token = "<eos>")
+        self.WORD_DECODER = data.Field(batch_first=True, tokenize=word_tokenize, lower=True, include_lengths=True, init_token = "<sos>", eos_token = "<eos>")
         self.LABEL = data.Field(sequential=False, unk_token=None, use_vocab=False)
 
         dict_fields = {
-                'id': ('id', self.RAW),
-                's_idx': ('s_idx', self.LABEL),
-                'e_idx': ('e_idx', self.LABEL),
-                'context': [('c_word', self.WORD), ('c_char', self.CHAR)],
-                'question': ('q_word', self.WORD),
-                'answer': [('q_word', self.WORD), ('q_char', self.CHAR)]
-                }
+            'id': ('id', self.RAW),
+            's_idx': ('s_idx', self.LABEL),
+            'e_idx': ('e_idx', self.LABEL),
+            'context': [('c_word', self.WORD), ('c_char', self.CHAR)],
+            'question': [('q_word', self.WORD), ('q_char', self.CHAR), ('q_word_decoder', self.WORD_DECODER), ('q_char_decoder', self.CHAR_DECODER)],
+            'answer': [('a_word', self.WORD), ('a_char', self.CHAR)]
+        }
 
         list_fields = [
-                ('id', self.RAW), 
-                ('s_idx', self.LABEL), ('e_idx', self.LABEL),
-                ('c_word', self.WORD), ('c_char', self.CHAR),
-                ('q_word', self.WORD), 
-                ('a_word', self.WORD), ('a_char', self.CHAR)
-                ]
+            ('id', self.RAW), 
+            ('s_idx', self.LABEL), ('e_idx', self.LABEL),
+            ('c_word', self.WORD), ('c_char', self.CHAR),
+            ('q_word', self.WORD), ('q_char', self.CHAR),
+            ('q_word_decoder', self.WORD_DECODER), ('q_char_decoder', self.CHAR_DECODER),
+            ('a_word', self.WORD), ('a_char', self.CHAR)
+        ]
         
         if os.path.exists(dataset_path):
             print("loading splits...")
@@ -79,8 +82,9 @@ class SQuAD():
 
         print("building vocab...")
         self.CHAR.build_vocab(self.train, self.dev)
+        self.CHAR_DECODER.build_vocab(self.train, self.dev)
         self.WORD.build_vocab(self.train, self.dev, vectors=GloVe(name='6B', dim=args.word_dim))
-        self.WORD_QUESTION.build_vocab(self.train, self.dev, vectors=GloVe(name='6B', dim=args.word_dim))
+        self.WORD_DECODER.build_vocab(self.train, self.dev, vectors=GloVe(name='6B', dim=args.word_dim))
 
         print("building iterators...")
         device = torch.device("cuda:{}".format(args.gpu) if torch.cuda.is_available() else "cpu")
