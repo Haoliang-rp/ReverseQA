@@ -237,13 +237,14 @@ class CQAttention(nn.Module):
         return out
 
 class EncoderBlock(nn.Module):
-    def __init__(self, conv_num, d_model, k, max_length, n_head, dropout):
+    def __init__(self, conv_num, d_model, k, max_length, n_head, dropout, device):
         super().__init__()
         self.conv_num = conv_num
         self.d_model = d_model
         self.n_head = n_head
         # pos encoding
         self.pos_embedding = nn.Embedding(max_length, self.d_model)
+        self.device = self.device
         
         # conv block 
         self.normb = nn.LayerNorm(self.d_model)
@@ -261,7 +262,7 @@ class EncoderBlock(nn.Module):
         batch_size = x.size(0)
         seq_len = x.size(1)
         
-        pos = torch.arange(0, seq_len).unsqueeze(0).repeat(batch_size, 1)
+        pos = torch.arange(0, seq_len).unsqueeze(0).repeat(batch_size, 1).to(self.device)
         pos_emb = self.pos_embedding(pos)
         out = x + pos_emb
         
@@ -384,8 +385,8 @@ class Baseline(nn.Module):
         self.answer_conv = DepthwiseSeparableConv(self.args.word_dim + self.args.char_channel_size, args.d_model, args.kernel_size).to(self.device)
         
         # multihead self attention
-        self.c_enc = EncoderBlock(conv_num=args.conv_num, d_model=args.d_model, k=args.kernel_size, max_length=args.max_len_context, n_head=args.n_head, dropout=args.dropout).to(self.device)
-        self.a_enc = EncoderBlock(conv_num=args.conv_num, d_model=args.d_model, k=args.kernel_size, max_length=args.max_len_answer, n_head=args.n_head, dropout=args.dropout).to(self.device)
+        self.c_enc = EncoderBlock(conv_num=args.conv_num, d_model=args.d_model, k=args.kernel_size, max_length=args.max_len_context, n_head=args.n_head, dropout=args.dropout, device=args.device).to(self.device)
+        self.a_enc = EncoderBlock(conv_num=args.conv_num, d_model=args.d_model, k=args.kernel_size, max_length=args.max_len_answer, n_head=args.n_head, dropout=args.dropout, device=args.device).to(self.device)
         
         # query and context attention
         self.ca_att = CQAttention(d_model=args.d_model, dropout=args.dropout).to(self.device)
