@@ -59,7 +59,7 @@ class Embedding(nn.Module):
         x = self.dropout(embed)
         
         # (batch * seq_len, 1, char_dim, word_len)
-        x = x.view(-1, self.args.char_dim, x.size(2)).unsqueeze(1)
+        x = x.view(-1, self.char_dim, x.size(2)).unsqueeze(1)
         
         # (batch * seq_len, char_channel_size, 1, conv_len) -> (batch * seq_len, char_channel_size, conv_len)
         x = self.char_conv(x).squeeze()
