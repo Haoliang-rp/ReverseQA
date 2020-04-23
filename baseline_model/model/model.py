@@ -392,8 +392,8 @@ class Baseline(nn.Module):
         # decoder
         self.Decoder = Decoder(output_dim=args.output_dim, n_layers=args.DEC_LAYERS, hidden_size=args.hidden_size, d_model=args.d_model, n_head=args.n_head, dropout=args.dropout, max_length=args.max_len_context)
     
-    def make_c_mask(self, batch):
-        c_mask = (batch.c_word[0] != self.args.pad_idx_encoder).unsqueeze(1).unsqueeze(2)
+    def make_enc_mask(self, src):
+        c_mask = (src != self.args.pad_idx_encoder).unsqueeze(1).unsqueeze(2)
         
         # batch_size  x 1 x 1 x seq_len
         # mask on the last dimension
@@ -413,7 +413,7 @@ class Baseline(nn.Module):
         
         return trg_mask
     
-    def forward(self, batch, start, end):
+    def forward(self, batch):
         cmask = self.make_enc_mask(batch.c_word[0])
         amask = self.make_enc_mask(batch.a_word[0])
         # emb size: bath x seq_len x (word_dim + char_channel_size)

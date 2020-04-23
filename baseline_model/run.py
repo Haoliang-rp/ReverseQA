@@ -21,7 +21,7 @@ def train(args, data):
 #        if param.requires_grad:
 #            ema.update(name, param.data)
 #    parameters = filter(lambda p:p.requires_grad, model.parameters())
-    TRG_PAD_IDX = args.data.WORD_DECODER.vocab.stoi[args.data.WORD.pad_token]
+    TRG_PAD_IDX = data.WORD_DECODER.vocab.stoi[data.WORD.pad_token]
 #    
     criterion = nn.CrossEntropyLoss(ignore_index = TRG_PAD_IDX)
     optimizer = torch.optim.Adam(model.parameters(), lr = args.learning_rate)
@@ -29,13 +29,13 @@ def train(args, data):
 #    writer = SummaryWriter(log_dir='runs/' + args.model_time)
 #    
 #    model.train()
-#    loss, last_epoch = 0, -1
+    loss, last_epoch = 0, -1
 #    max_dev_exact, max_dev_f1 = -1, -1
 #    
 #    test_bound = 2
 #    iterator = data.train_iter
 #    
-    for i, batch in enumerate(iterator):
+    for i, batch in enumerate(data.train_iter):
 #        present_epoch = int(iterator.epoch)
 #        if present_epoch == args.epoch:
 #            break
@@ -126,7 +126,7 @@ def main():
     setattr(args, 'pad_idx_decoder', data.WORD_DECODER.vocab.stoi[data.WORD_DECODER.pad_token])
     setattr(args, 'output_dim', len(data.WORD_DECODER.vocab))
     setattr(args, 'dataset_file', '.data/squad/{}'.format(args.dev_file))
-    setattr(args, 'prediction_file', f'prediction{}.out'.format(args.gpu))
+    setattr(args, 'prediction_file', 'prediction{}.out'.format(args.gpu))
     setattr(args, 'model_time', strftime('%H:%M:%S', gmtime()))
     print('data loading complete!')
 
