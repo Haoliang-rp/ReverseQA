@@ -16,49 +16,55 @@ def train(args, data):
     device = torch.device("cuda:{}".format(args.gpu) if torch.cuda.is_available() else "cpu")
     model = Baseline(args, data.WORD.vocab.vectors).to(device)
     
-    ema = EMA(args.exp_decay_rate)
-    for name, param in model.named_parameters():
-        if param.requires_grad:
-            ema.update(name, param.data)
-    parameters = filter(lambda p:p.requires_grad, model.parameters())
-    TRG_PAD_IDX = args.data.WORD_DECODER.vocab.stoi[args.data.WORD.pad_token]
+#    ema = EMA(args.exp_decay_rate)
+#    for name, param in model.named_parameters():
+#        if param.requires_grad:
+#            ema.update(name, param.data)
+#    parameters = filter(lambda p:p.requires_grad, model.parameters())
+#    TRG_PAD_IDX = args.data.WORD_DECODER.vocab.stoi[args.data.WORD.pad_token]
+#    
+#    criterion = nn.CrossEntropyLoss(ignore_index = TRG_PAD_IDX)
+#    optimizer = torch.optim.Adam(model.parameters(), lr = args.learning_rate)
+#    
+#    writer = SummaryWriter(log_dir='runs/' + args.model_time)
+#    
+#    model.train()
+#    loss, last_epoch = 0, -1
+#    max_dev_exact, max_dev_f1 = -1, -1
+#    
+#    test_bound = 2
+#    iterator = data.train_iter
+#    
+#    for i, batch in enumerate(iterator):
+#        present_epoch = int(iterator.epoch)
+#        if present_epoch == args.epoch:
+#            break
+#        
+#        if present_epoch > last_epoch:
+#            print('epoch:', present_epoch + 1)
+#        last_epoch = present_epoch
+#        
+#        X, attention = model(batch)
+#        
+#        output_dim = X.shape[-1]
+#        X = X.contiguous().view(-1, output_dim)
+#        label = batch.q_word_decoder[0][:, 1:].contiguous().view(-1)
+#        
+#        optimizer.zero_grad()
+#        batch_loss = criterion(X, label)
+#        loss += batch_loss.item()
+#        batch_loss.backward()
+#        torch.nn.utils.clip_grad_norm_(model.parameters(). args.CLIP)
+#        optimizer.step()
+#        
+#        print('loss: {}'.format(batch_loss))
+#        print('outsize: {}'.format(X.size()))
     
-    criterion = nn.CrossEntropyLoss(ignore_index = TRG_PAD_IDX)
-    optimizer = torch.optim.Adam(model.parameters(), lr = args.learning_rate)
     
-    writer = SummaryWriter(log_dir='runs/' + args.model_time)
     
-    model.train()
-    loss, last_epoch = 0, -1
-    max_dev_exact, max_dev_f1 = -1, -1
     
-    test_bound = 2
-    iterator = data.train_iter
     
-    for i, batch in enumerate(iterator):
-        present_epoch = int(iterator.epoch)
-        if present_epoch == args.epoch:
-            break
-        
-        if present_epoch > last_epoch:
-            print('epoch:', present_epoch + 1)
-        last_epoch = present_epoch
-        
-        X, attention = model(batch)
-        
-        output_dim = X.shape[-1]
-        X = X.contiguous().view(-1, output_dim)
-        label = batch.q_word_decoder[0][:, 1:].contiguous().view(-1)
-        
-        optimizer.zero_grad()
-        batch_loss = criterion(X, label)
-        loss += batch_loss.item()
-        batch_loss.backward()
-        torch.nn.utils.clip_grad_norm_(model.parameters(). args.CLIP)
-        optimizer.step()
-        
-        print('loss: {}'.format(batch_loss))
-        print('outsize: {}'.format(X.size()))
+    
 #        for name, param in model.named_parameters():
 #            if param.requires_grad:
 #                ema.update(name, param.data)
