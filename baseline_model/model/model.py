@@ -244,7 +244,7 @@ class EncoderBlock(nn.Module):
         self.n_head = n_head
         # pos encoding
         self.pos_embedding = nn.Embedding(max_length, self.d_model)
-        self.device = self.device
+        self.device = device
         
         # conv block 
         self.normb = nn.LayerNorm(self.d_model)
