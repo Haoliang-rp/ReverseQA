@@ -13,8 +13,7 @@ from model.ema import EMA
 #import evaluate
 
 def train(args, data):
-    device = torch.device("cuda:{}".format(args.gpu) if torch.cuda.is_available() else "cpu")
-    model = Baseline(args, data.WORD.vocab.vectors).to(device)
+    model = Baseline(args, data.WORD.vocab.vectors).to(args.device)
     
 #    ema = EMA(args.exp_decay_rate)
 #    for name, param in model.named_parameters():
@@ -128,6 +127,7 @@ def main():
     setattr(args, 'dataset_file', '.data/squad/{}'.format(args.dev_file))
     setattr(args, 'prediction_file', 'prediction{}.out'.format(args.gpu))
     setattr(args, 'model_time', strftime('%H:%M:%S', gmtime()))
+    setattr(args, 'device', torch.device("cuda:{}".format(args.gpu) if torch.cuda.is_available() else "cpu"))
     print('data loading complete!')
 
     print('training start!')
