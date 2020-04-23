@@ -302,8 +302,8 @@ class DecoderLayer(nn.Module):
         
         self.ff_layer_norm = nn.LayerNorm(d_model * 4)
         
-        self.self_attention = MultiHeadAttention(hid_dim=d_model*4, n_head=n_head, self.dropout)
-        self.encoder_attention = MultiHeadAttention(hid_dim=d_model*4, n_head=n_head, self.dropout)
+        self.self_attention = MultiHeadAttention(hid_dim=d_model*4, n_head=n_head, dropout=self.dropout)
+        self.encoder_attention = MultiHeadAttention(hid_dim=d_model*4, n_head=n_head, dropout=self.dropout)
         
         self.fc = nn.Linear(d_model*4, d_model*4, bias=True)
     
