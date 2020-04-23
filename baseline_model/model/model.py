@@ -375,23 +375,23 @@ class Baseline(nn.Module):
     def __init__(self, args, pretrained):
         super(Baseline, self).__init__()
         self.args = args
-        
+        self.device = args.device
         # embedding layer
-        self.emb = Embedding(args, pretrained)  
+        self.emb = Embedding(args, pretrained).to(self.device)
         
         # Depth wise separable conv layer
-        self.context_conv = DepthwiseSeparableConv(self.args.word_dim + self.args.char_channel_size, args.d_model, args.kernel_size)
-        self.answer_conv = DepthwiseSeparableConv(self.args.word_dim + self.args.char_channel_size, args.d_model, args.kernel_size)
+        self.context_conv = DepthwiseSeparableConv(self.args.word_dim + self.args.char_channel_size, args.d_model, args.kernel_size).to(self.device)
+        self.answer_conv = DepthwiseSeparableConv(self.args.word_dim + self.args.char_channel_size, args.d_model, args.kernel_size).to(self.device)
         
         # multihead self attention
-        self.c_enc = EncoderBlock(conv_num=args.conv_num, d_model=args.d_model, k=args.kernel_size, max_length=args.max_len_context, n_head=args.n_head, dropout=args.dropout)
-        self.a_enc = EncoderBlock(conv_num=args.conv_num, d_model=args.d_model, k=args.kernel_size, max_length=args.max_len_answer, n_head=args.n_head, dropout=args.dropout)
+        self.c_enc = EncoderBlock(conv_num=args.conv_num, d_model=args.d_model, k=args.kernel_size, max_length=args.max_len_context, n_head=args.n_head, dropout=args.dropout).to(self.device)
+        self.a_enc = EncoderBlock(conv_num=args.conv_num, d_model=args.d_model, k=args.kernel_size, max_length=args.max_len_answer, n_head=args.n_head, dropout=args.dropout).to(self.device)
         
         # query and context attention
-        self.ca_att = CQAttention(d_model=args.d_model, dropout=args.dropout)
+        self.ca_att = CQAttention(d_model=args.d_model, dropout=args.dropout).to(self.device)
         
         # decoder
-        self.Decoder = Decoder(output_dim=args.output_dim, n_layers=args.DEC_LAYERS, hidden_size=args.hidden_size, d_model=args.d_model, n_head=args.n_head, dropout=args.dropout, max_length=args.max_len_context)
+        self.Decoder = Decoder(output_dim=args.output_dim, n_layers=args.DEC_LAYERS, hidden_size=args.hidden_size, d_model=args.d_model, n_head=args.n_head, dropout=args.dropout, max_length=args.max_len_context).to(self.device)
     
     def make_enc_mask(self, src):
         c_mask = (src != self.args.pad_idx_encoder).unsqueeze(1).unsqueeze(2)
