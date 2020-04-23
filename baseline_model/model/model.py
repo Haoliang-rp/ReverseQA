@@ -101,7 +101,7 @@ class DepthwiseSeparableConv(nn.Module):
 
 
 class MultiHeadAttention(nn.Module):
-    def __init__(self, hid_dim, n_head, dropout):
+    def __init__(self, hid_dim, n_head, dropout, device):
         super().__init__()
         self.hid_dim = hid_dim
         self.n_head = n_head
@@ -114,7 +114,7 @@ class MultiHeadAttention(nn.Module):
         self.dropout = nn.Dropout(dropout)
         
         self.fc = nn.Linear(self.hid_dim, self.hid_dim)
-        self.scale = torch.sqrt(torch.FloatTensor([self.head_dim]))
+        self.scale = torch.sqrt(torch.FloatTensor([self.head_dim])).to(device)
     
     def forward(self, query, key, value, mask=None):
         # batch_size, seq_len, hid_dim
@@ -253,7 +253,7 @@ class EncoderBlock(nn.Module):
         self.dropout = dropout
         
         # self attention
-        self.self_att = MultiHeadAttention(self.d_model, self.n_head, self.dropout)
+        self.self_att = MultiHeadAttention(self.d_model, self.n_head, self.dropout, self.device)
     
     def forward(self, x, mask):
         # x = batch_size x d_model x seq_len
@@ -268,6 +268,8 @@ class EncoderBlock(nn.Module):
         
         res = out.permute(0, 2, 1)
         out = self.normb(out)
+        print(res.size())
+        print(out.size())
         for i, conv in enumerate(self.convs):
             out = conv(out.permute(0, 2, 1))
             out = F.relu(out)
@@ -304,8 +306,8 @@ class DecoderLayer(nn.Module):
         
         self.ff_layer_norm = nn.LayerNorm(d_model * 4)
         
-        self.self_attention = MultiHeadAttention(hid_dim=d_model*4, n_head=n_head, dropout=self.dropout)
-        self.encoder_attention = MultiHeadAttention(hid_dim=d_model*4, n_head=n_head, dropout=self.dropout)
+        self.self_attention = MultiHeadAttention(hid_dim=d_model*4, n_head=n_head, dropout=self.dropout, self.device)
+        self.encoder_attention = MultiHeadAttention(hid_dim=d_model*4, n_head=n_head, dropout=self.dropout, self.device)
         
         self.fc = nn.Linear(d_model*4, d_model*4, bias=True)
     
