@@ -122,6 +122,7 @@ def main():
     setattr(args, 'word_vocab_size', len(data.WORD.vocab))
     setattr(args, 'pad_idx_encoder', data.WORD.vocab.stoi[data.WORD.pad_token])
     setattr(args, 'pad_idx_decoder', data.WORD_DECODER.vocab.stoi[data.WORD_DECODER.pad_token])
+    setattr(args, 'output_dim', len(data.WORD_DECODER.vocab))
     setattr(args, 'dataset_file', f'.data/squad/{args.dev_file}')
     setattr(args, 'prediction_file', f'prediction{args.gpu}.out')
     setattr(args, 'model_time', strftime('%H:%M:%S', gmtime()))

@@ -387,10 +387,10 @@ class Baseline(nn.Module):
         self.a_enc = EncoderBlock(conv_num=args.conv_num, d_model=args.d_model, k=args.kernel_size, max_length=args.max_len_answer, n_head=args.n_head, dropout=args.dropout)
         
         # query and context attention
-        self.ca_att = CQAttention()
+        self.ca_att = CQAttention(d_model=args.d_model, dropout=args.dropout)
         
         # decoder
-        self.Decoder = Decoder()
+        self.Decoder = Decoder(output_dim=args.output_dim, n_layers=args.DEC_LAYERS, hidden_size=args.hidden_size, d_model=args.d_model, n_head=args.n_head, dropoutargs.dropout, max_lengthargs.max_len_context)
     
     def make_c_mask(self, batch):
         c_mask = (batch.c_word[0] != self.args.pad_idx_encoder).unsqueeze(1).unsqueeze(2)
