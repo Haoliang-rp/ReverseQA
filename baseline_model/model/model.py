@@ -415,8 +415,8 @@ class Baseline(nn.Module):
         return trg_mask
     
     def forward(self, batch):
-        cmask = self.make_enc_mask(batch.c_word[0])
-        amask = self.make_enc_mask(batch.a_word[0])
+        cmask = self.make_enc_mask(batch.c_word[0]).to(self.device)
+        amask = self.make_enc_mask(batch.a_word[0]).to(self.device)
         # emb size: bath x seq_len x (word_dim + char_channel_size)
         C_emb = self.emb(batch.c_char, batch.c_word[0])
         A_emb = self.emb(batch.a_char, batch.a_word[0])
@@ -430,7 +430,7 @@ class Baseline(nn.Module):
         
         encoded = self.ca_att(Ce, Ae, cmask, amask)
         
-        trg_mask = self.make_dec_mask(batch.q_word_decoder[0][:,:-1])
+        trg_mask = self.make_dec_mask(batch.q_word_decoder[0][:,:-1]).to(self.device)
         
         Q_emb = self.emb(batch.q_char_decoder[:,:-1], batch.q_word_decoder[0][:,:-1])
         output, attention = self.decoder(Q_emb, encoded, trg_mask, cmask)
