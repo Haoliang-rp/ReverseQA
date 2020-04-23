@@ -29,6 +29,7 @@ class Embedding(nn.Module):
         # char_dim = 8, char_channel_width = 5
         # char_channel_size = 100
         # result: for each channel, we have 22 element -----> needs to be max-ppoled
+        self.args = args
         self.char_emb = nn.Embedding(args.char_vocab_size, args.char_dim, padding_idx=1)
         nn.init.uniform_(self.char_emb.weight, -0.001, 0.001)
         
@@ -59,7 +60,7 @@ class Embedding(nn.Module):
         x = self.dropout(embed)
         
         # (batch * seq_len, 1, char_dim, word_len)
-        x = x.view(-1, self.char_dim, x.size(2)).unsqueeze(1)
+        x = x.view(-1, self.args.char_dim, x.size(2)).unsqueeze(1)
         
         # (batch * seq_len, char_channel_size, 1, conv_len) -> (batch * seq_len, char_channel_size, conv_len)
         x = self.char_conv(x).squeeze()
