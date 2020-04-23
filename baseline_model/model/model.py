@@ -298,11 +298,12 @@ class EncoderBlock(nn.Module):
         return out
 
 class DecoderLayer(nn.Module):
-    def __init__(self, d_model, n_head, dropout):
+    def __init__(self, d_model, n_head, dropout, device):
         super().__init__()
         self.dropout = dropout
         self.self_attn_layer_norm = nn.LayerNorm(d_model * 4)
         self.enc_attn_layer_norm = nn.LayerNorm(d_model * 4)
+        self.device=device
         
         self.ff_layer_norm = nn.LayerNorm(d_model * 4)
         
@@ -336,7 +337,7 @@ class DecoderLayer(nn.Module):
         return question, attention
     
 class Decoder(nn.Module):
-    def __init__(self, output_dim, n_layers, hidden_size, d_model, n_head, dropout, max_length):
+    def __init__(self, output_dim, n_layers, hidden_size, d_model, n_head, dropout, max_length, device):
         super().__init__()
         self.hidden_size = hidden_size
         self.dropout = dropout
@@ -348,7 +349,8 @@ class Decoder(nn.Module):
         
         self.layers = nn.ModuleList([DecoderLayer(d_model, 
                                                   n_head,  
-                                                  dropout)
+                                                  dropout,
+                                                  device)
                                      for _ in range(n_layers)])
         
         self.dropout = nn.Dropout(dropout)
@@ -394,7 +396,7 @@ class Baseline(nn.Module):
         self.ca_att = CQAttention(d_model=args.d_model, dropout=args.dropout).to(self.device)
         
         # decoder
-        self.Decoder = Decoder(output_dim=args.output_dim, n_layers=args.DEC_LAYERS, hidden_size=args.hidden_size, d_model=args.d_model, n_head=args.n_head, dropout=args.dropout, max_length=args.max_len_context).to(self.device)
+        self.Decoder = Decoder(output_dim=args.output_dim, n_layers=args.DEC_LAYERS, hidden_size=args.hidden_size, d_model=args.d_model, n_head=args.n_head, dropout=args.dropout, max_length=args.max_len_context, device=self.device).to(self.device)
     
     def make_enc_mask(self, src):
         c_mask = (src != self.args.pad_idx_encoder).unsqueeze(1).unsqueeze(2)
