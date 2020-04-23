@@ -21,10 +21,10 @@ def train(args, data):
 #        if param.requires_grad:
 #            ema.update(name, param.data)
 #    parameters = filter(lambda p:p.requires_grad, model.parameters())
-#    TRG_PAD_IDX = args.data.WORD_DECODER.vocab.stoi[args.data.WORD.pad_token]
+    TRG_PAD_IDX = args.data.WORD_DECODER.vocab.stoi[args.data.WORD.pad_token]
 #    
-#    criterion = nn.CrossEntropyLoss(ignore_index = TRG_PAD_IDX)
-#    optimizer = torch.optim.Adam(model.parameters(), lr = args.learning_rate)
+    criterion = nn.CrossEntropyLoss(ignore_index = TRG_PAD_IDX)
+    optimizer = torch.optim.Adam(model.parameters(), lr = args.learning_rate)
 #    
 #    writer = SummaryWriter(log_dir='runs/' + args.model_time)
 #    
@@ -35,7 +35,7 @@ def train(args, data):
 #    test_bound = 2
 #    iterator = data.train_iter
 #    
-#    for i, batch in enumerate(iterator):
+    for i, batch in enumerate(iterator):
 #        present_epoch = int(iterator.epoch)
 #        if present_epoch == args.epoch:
 #            break
@@ -44,22 +44,24 @@ def train(args, data):
 #            print('epoch:', present_epoch + 1)
 #        last_epoch = present_epoch
 #        
-#        X, attention = model(batch)
+        X, attention = model(batch)
 #        
 #        output_dim = X.shape[-1]
 #        X = X.contiguous().view(-1, output_dim)
-#        label = batch.q_word_decoder[0][:, 1:].contiguous().view(-1)
+        label = batch.q_word_decoder[0][:, 1:].contiguous().view(-1)
 #        
-#        optimizer.zero_grad()
-#        batch_loss = criterion(X, label)
-#        loss += batch_loss.item()
-#        batch_loss.backward()
-#        torch.nn.utils.clip_grad_norm_(model.parameters(). args.CLIP)
-#        optimizer.step()
+        optimizer.zero_grad()
+        batch_loss = criterion(X, label)
+        loss += batch_loss.item()
+        batch_loss.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(). args.CLIP)
+        optimizer.step()
 #        
-#        print('loss: {}'.format(batch_loss))
-#        print('outsize: {}'.format(X.size()))
-    
+        print('loss: {}'.format(batch_loss))
+        print('outsize: {}'.format(X.size()))
+        
+        
+        if i == 2: break
     
     
     
@@ -123,8 +125,8 @@ def main():
     setattr(args, 'pad_idx_encoder', data.WORD.vocab.stoi[data.WORD.pad_token])
     setattr(args, 'pad_idx_decoder', data.WORD_DECODER.vocab.stoi[data.WORD_DECODER.pad_token])
     setattr(args, 'output_dim', len(data.WORD_DECODER.vocab))
-    setattr(args, 'dataset_file', f'.data/squad/{args.dev_file}')
-    setattr(args, 'prediction_file', f'prediction{args.gpu}.out')
+    setattr(args, 'dataset_file', '.data/squad/{}'.format(args.dev_file))
+    setattr(args, 'prediction_file', f'prediction{}.out'.format(args.gpu))
     setattr(args, 'model_time', strftime('%H:%M:%S', gmtime()))
     print('data loading complete!')
 
@@ -132,7 +134,8 @@ def main():
     best_model = train(args, data)
     if not os.path.exists('saved_models'):
         os.makedirs('saved_models')
-    torch.save(best_model.state_dict(), f'saved_models/BiDAF_{args.model_time}.pt')
+    if best_model:
+        torch.save(best_model.state_dict(), 'saved_models/BiDAF_{}.pt'.format(args.model_time))
     print('training finished!')
 
 
