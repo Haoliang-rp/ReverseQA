@@ -85,8 +85,6 @@ def main():
     parser.add_argument('--char-channel-width', default=5, type=int)
     parser.add_argument('--char-channel-size', default=100, type=int)
     
-    parser.add_argument('--learning-rate', default=0.0005, type=int)
-    
     parser.add_argument('--dev-batch-size', default=100, type=int)
     parser.add_argument('--dev-file', default='dev-v2.0.json')
     parser.add_argument('--train-batch-size', default=60, type=int)
