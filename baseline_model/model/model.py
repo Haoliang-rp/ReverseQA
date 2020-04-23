@@ -383,8 +383,8 @@ class Baseline(nn.Module):
         self.answer_conv = DepthwiseSeparableConv(self.args.word_dim + self.args.char_channel_size, args.d_model, args.kernel_size)
         
         # multihead self attention
-        self.c_enc = EncoderBlock(conv_num=args.conv_num, k=args.kernel_size, max_length=args.max_len_context, n_head=args.n_head, dropout=args.dropout)
-        self.a_enc = EncoderBlock(conv_num=args.conv_num, k=args.kernel_size, max_length=args.max_len_answer, n_head=args.n_head, dropout=args.dropout)
+        self.c_enc = EncoderBlock(conv_num=args.conv_num, d_model=args.d_model, k=args.kernel_size, max_length=args.max_len_context, n_head=args.n_head, dropout=args.dropout)
+        self.a_enc = EncoderBlock(conv_num=args.conv_num, d_model=args.d_model, k=args.kernel_size, max_length=args.max_len_answer, n_head=args.n_head, dropout=args.dropout)
         
         # query and context attention
         self.ca_att = CQAttention()
