@@ -122,9 +122,9 @@ class MultiHeadAttention(nn.Module):
         seq_len = query.size(1)
         
         # batch_size x n_head x seq_len x head_dim
-        Q = self.q_linear(query).view(batch_size, seq_len, self.n_head, self.head_dim).permute(0, 2, 1, 3)
-        K = self.k_linear(key).view(batch_size, seq_len, self.n_head, self.head_dim).permute(0, 2, 1, 3)
-        V = self.v_linear(value).view(batch_size, seq_len, self.n_head, self.head_dim).permute(0, 2, 1, 3)
+        Q = self.q_linear(query).view(batch_size, -1, self.n_head, self.head_dim).permute(0, 2, 1, 3)
+        K = self.k_linear(key).view(batch_size, -1, self.n_head, self.head_dim).permute(0, 2, 1, 3)
+        V = self.v_linear(value).view(batch_size, -1, self.n_head, self.head_dim).permute(0, 2, 1, 3)
         
         # batch_size x n_head x seq_len x head_dim   matmul   batch_size x n_head x head_dim x seq_len
         # ----> batch_size x n_head x seq_len x seq_len
