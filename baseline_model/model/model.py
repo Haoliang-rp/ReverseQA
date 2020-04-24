@@ -344,8 +344,9 @@ class Decoder(nn.Module):
         self.hidden_size = hidden_size
         self.dropout = dropout
         self.max_length = max_length
+        self.device = device
         
-        self.pos_embedding = nn.Embedding(self.max_length, hidden_size*2).to(device)
+        self.pos_embedding = nn.Embedding(self.max_length, hidden_size*2)
         
         self.fc = nn.Linear(hidden_size*2, d_model*n_head, bias=True)
         
@@ -364,7 +365,7 @@ class Decoder(nn.Module):
         batch_size = question_emb.size(0)
         question_len = question_emb.size(1)
         
-        pos = torch.arange(0, question_len).unsqueeze(0).repeat(batch_size, 1)
+        pos = torch.arange(0, question_len).unsqueeze(0).repeat(batch_size, 1).to(self.device)
         pos_emb = self.pos_embedding(pos)
         ques_emb = question_emb + pos_emb
         
