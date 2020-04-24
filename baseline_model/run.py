@@ -44,7 +44,8 @@ def train(args, data):
 #        last_epoch = present_epoch
 #        
         X, attention = model(batch)
-#        
+        output_dim = X.shape[-1]
+        X = X.contiguous().view(-1, output_dim)
 #        output_dim = X.shape[-1]
 #        X = X.contiguous().view(-1, output_dim)
         label = batch.q_word_decoder[0][:, 1:].contiguous().view(-1)
@@ -76,7 +77,7 @@ def train(args, data):
     
         
     print('end of the test')
-
+    return model
 def test():
     pass
 
