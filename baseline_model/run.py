@@ -113,7 +113,7 @@ def main():
     parser.add_argument('--max-len-question', default=30, type=int)
     
     parser.add_argument('--conv-num', default=4, type=int)
-    parser.add_argument('--kernel-size', default=4, type=int)
+    parser.add_argument('--kernel-size', default=5, type=int)
     parser.add_argument('--CLIP', default=1, type=int)
     args = parser.parse_args()
 
