@@ -254,6 +254,10 @@ class EncoderBlock(nn.Module):
         
         # self attention
         self.self_att = MultiHeadAttention(self.d_model, self.n_head, self.dropout, self.device)
+        self.norme = nn.LayerNorm(self.d_model)
+        
+        # feedforward
+        self.fc = nn.Linear(self.d_model, self.d_model, bias=True)
     
     def forward(self, x, mask):
         # x = batch_size x d_model x seq_len
