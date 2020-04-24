@@ -54,7 +54,7 @@ def train(args, data):
         batch_loss = criterion(X, label)
         loss += batch_loss.item()
         batch_loss.backward()
-        torch.nn.utils.clip_grad_norm_(model.parameters(). args.CLIP)
+        torch.nn.utils.clip_grad_norm_(model.parameters(), args.CLIP)
         optimizer.step()
 #        
         print('loss: {}'.format(batch_loss))
