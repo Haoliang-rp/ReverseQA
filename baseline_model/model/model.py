@@ -272,11 +272,8 @@ class EncoderBlock(nn.Module):
         
         res = out.permute(0, 2, 1)
         out = self.normb(out)
-        print(res.size())
-        print(out.size())
         for i, conv in enumerate(self.convs):
             out = conv(out.permute(0, 2, 1))
-            print('inout:', out.size())
             out = F.relu(out)
             out = out + res
             if (i + 1) % 2 == 0:
