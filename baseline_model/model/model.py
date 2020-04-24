@@ -345,7 +345,7 @@ class Decoder(nn.Module):
         self.dropout = dropout
         self.max_length = max_length
         
-        self.pos_embedding = nn.Embedding(self.max_length, hidden_size*2)
+        self.pos_embedding = nn.Embedding(self.max_length, hidden_size*2).to(device)
         
         self.fc = nn.Linear(hidden_size*2, d_model*n_head, bias=True)
         
