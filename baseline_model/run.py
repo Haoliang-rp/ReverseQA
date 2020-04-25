@@ -237,8 +237,9 @@ def main():
     parser.add_argument('--print-freq', default=250, type=int)
     parser.add_argument('--save-freq', default=500, type=int)
     parser.add_argument('--epoch', default=12, type=int)
+    
     args = parser.parse_args()
-
+    setattr(args, 'device', torch.device("cpu"))#"cuda:{}".format(args.gpu) if torch.cuda.is_available() else 
     print('loading SQuAD data...')
     data = SQuAD(args)
     setattr(args, 'char_vocab_size', len(data.CHAR.vocab))
@@ -249,7 +250,7 @@ def main():
     setattr(args, 'dataset_file', '.data/squad/{}'.format(args.dev_file))
     setattr(args, 'prediction_file', 'prediction{}.out'.format(args.gpu))
     setattr(args, 'model_time', strftime('%H:%M:%S', gmtime()))
-    setattr(args, 'device', torch.device("cpu"))#"cuda:{}".format(args.gpu) if torch.cuda.is_available() else 
+    
     print('data loading complete!')
 
     print('training start!')
