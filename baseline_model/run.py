@@ -249,7 +249,7 @@ def main():
     setattr(args, 'dataset_file', '.data/squad/{}'.format(args.dev_file))
     setattr(args, 'prediction_file', 'prediction{}.out'.format(args.gpu))
     setattr(args, 'model_time', strftime('%H:%M:%S', gmtime()))
-    setattr(args, 'device', torch.device("cuda:{}".format(args.gpu) if torch.cuda.is_available() else "cpu"))
+    setattr(args, 'device', torch.device("cpu"))#"cuda:{}".format(args.gpu) if torch.cuda.is_available() else 
     print('data loading complete!')
 
     print('training start!')

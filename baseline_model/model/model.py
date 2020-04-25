@@ -414,7 +414,7 @@ class Baseline(nn.Module):
         trg_pad_mask = (trg != self.args.pad_idx_encoder).unsqueeze(1).unsqueeze(2)
         # batch_size  x 1 x 1 x seq_len
         
-        seq_len = trg.shape[3]
+        seq_len = trg.shape[1]
         
         trg_sub_mask = torch.tril(torch.ones((seq_len, seq_len))).bool().to(self.device)
         # seq_len x seq_len
