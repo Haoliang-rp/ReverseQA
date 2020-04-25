@@ -75,8 +75,7 @@ def train(args, data):
             
         if (i + 1) % args.save_freq == 0:
             torch.save(model.state_dict(), 'saved_models/BiDAF_{}.pt'.format(args.model_time))
-        
-        if i == 2: break   
+ 
     return model
 
 def test(args, model, data):#, ema
