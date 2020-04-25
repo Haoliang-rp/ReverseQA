@@ -17,10 +17,10 @@ from tqdm import tqdm
 def train(args, data):
     model = Baseline(args, data.WORD.vocab.vectors).to(args.device)
     
-    ema = EMA(args.exp_decay_rate)
-    for name, param in model.named_parameters():
-        if param.requires_grad:
-            ema.update(name, param.data)
+#    ema = EMA(args.exp_decay_rate)
+#    for name, param in model.named_parameters():
+#        if param.requires_grad:
+#            ema.update(name, param.data)
 #    parameters = filter(lambda p:p.requires_grad, model.parameters())
 
     criterion = nn.CrossEntropyLoss(ignore_index = args.pad_idx_decoder)
@@ -70,7 +70,7 @@ def train(args, data):
 #                ema.update(name, param.data)
 #        
         if (i + 1) % args.print_freq == 0:
-            dev_loss = test(args, model, data, ema)
+            dev_loss = test(args, model, data)#, ema
             print('train loss: {} / dev loss: {}'.format(loss, dev_loss))
             
         if (i + 1) % args.save_freq == 0:
@@ -79,17 +79,17 @@ def train(args, data):
         if i == 2: break   
     return model
 
-def test(args, model, data, ema):
+def test(args, model, data):#, ema
     criterion = nn.CrossEntropyLoss(ignore_index = args.pad_idx_decoder)
     loss = 0
     
     model.eval()
     
     backup_params = EMA(0)
-    for name, param in model.named_parameters():
-        if param.requires_grad:
-            backup_params.register(name, param.data)
-            param.data.copy_(ema.get(name))
+#    for name, param in model.named_parameters():
+#        if param.requires_grad:
+#            backup_params.register(name, param.data)
+#            param.data.copy_(ema.get(name))
             
     with torch.set_grad_enable(False):
         for batch in iter(data.dev_iter):
