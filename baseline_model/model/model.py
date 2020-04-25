@@ -416,7 +416,7 @@ class Baseline(nn.Module):
         
         seq_len = trg.shape[1]
         
-        trg_sub_mask = torch.tril(torch.ones((seq_len, seq_len))).bool()#.to(self.device)
+        trg_sub_mask = torch.tril(torch.ones((seq_len, seq_len))).bool().to(self.device)
         # seq_len x seq_len
         
         trg_mask = trg_pad_mask & trg_sub_mask
