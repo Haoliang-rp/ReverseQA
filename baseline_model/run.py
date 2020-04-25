@@ -74,7 +74,7 @@ def train(args, data):
             print('train loss: {} / dev loss: {}'.format(loss, dev_loss))
             
         if (i + 1) % args.save_freq == 0:
-            torch.save(model.state_dict(), f'saved_models/BiDAF_{args.model_time}.pt')
+            torch.save(model.state_dict(), 'saved_models/BiDAF_{}.pt'.format(args.model_time))
         
         if i == 2: break   
     return model
