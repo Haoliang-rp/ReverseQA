@@ -242,7 +242,7 @@ class EncoderBlock(nn.Module):
         self.d_model = d_model
         self.n_head = n_head
         # pos encoding
-        self.pos_embedding = nn.Embedding(max_length, self.d_model)
+        self.pos_embedding = nn.Embedding(max_length+2, self.d_model)
         self.device = device
         
         # conv block 
@@ -348,7 +348,7 @@ class Decoder(nn.Module):
         self.max_length = max_length
         self.device = device
         
-        self.pos_embedding = nn.Embedding(self.max_length, hidden_size*2)
+        self.pos_embedding = nn.Embedding(self.max_length+2, hidden_size*2)
         
         self.fc = nn.Linear(hidden_size*2, d_model*n_head, bias=True)
         
