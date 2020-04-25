@@ -63,7 +63,7 @@ class Embedding(nn.Module):
         x = x.view(-1, self.args.char_dim, x.size(2)).unsqueeze(1)
         
         # (batch * seq_len, char_channel_size, 1, conv_len) -> (batch * seq_len, char_channel_size, conv_len)
-        x = self.char_conv(x).squeeze()
+        x = self.char_conv(x).squeeze(2)
         
         # (batch * seq_len, char_channel_size, 1) -> (batch * seq_len, char_channel_size)
         x = F.max_pool1d(x, x.size(2)).squeeze()
@@ -119,7 +119,6 @@ class MultiHeadAttention(nn.Module):
     def forward(self, query, key, value, mask=None):
         # batch_size, seq_len, hid_dim
         batch_size = query.size(0)
-        seq_len = query.size(1)
         
         # batch_size x n_head x seq_len x head_dim
         Q = self.q_linear(query).view(batch_size, -1, self.n_head, self.head_dim).permute(0, 2, 1, 3)
@@ -302,7 +301,6 @@ class EncoderBlock(nn.Module):
 class DecoderLayer(nn.Module):
     def __init__(self, d_model, n_head, dropout, device):
         super().__init__()
-        self.dropout = dropout
         self.self_attn_layer_norm = nn.LayerNorm(d_model * 4)
         self.enc_attn_layer_norm = nn.LayerNorm(d_model * 4)
         self.device=device
@@ -313,6 +311,8 @@ class DecoderLayer(nn.Module):
         self.encoder_attention = MultiHeadAttention(hid_dim=d_model*4, n_head=n_head, dropout=self.dropout, device=self.device)
         
         self.fc = nn.Linear(d_model*4, d_model*4, bias=True)
+        
+        self.dropout = nn.Dropout(dropout)
     
     def forward(self, question_emb, enc_emb, question_mask, enc_mask):
         """
@@ -324,17 +324,19 @@ class DecoderLayer(nn.Module):
         
         _question, _ = self.self_attention(question_emb, question_emb, question_emb, question_mask)
         
-        question = self.self_attn_layer_norm(question_emb + F.dropout(_question, p=self.dropout, training=self.training))
+        # F.dropout(_question, p=self.dropout, training=self.training)
+        question = self.self_attn_layer_norm(question_emb + self.dropout(_question))
         # batch_size x question_len x hid_dim
         
         _question, attention = self.encoder_attention(question_emb, enc_emb, enc_emb, enc_mask)
-        
-        question = self.enc_attn_layer_norm(question + F.dropout(_question, p=self.dropout, training=self.training))
+        # batch_size x question_len x hid_dim
+
+        question = self.enc_attn_layer_norm(question + self.dropout(_question))
         
         _question = self.fc(question)
         _question = F.relu(_question)
         
-        question = self.ff_layer_norm(question + F.dropout(_question, p=self.dropout, training=self.training))
+        question = self.ff_layer_norm(question + self.dropout(_question))
         
         return question, attention
     
@@ -422,12 +424,13 @@ class Baseline(nn.Module):
         
         return trg_mask
     
-    def forward(self, batch):
-        cmask = self.make_enc_mask(batch.c_word[0]).to(self.device)
-        amask = self.make_enc_mask(batch.a_word[0]).to(self.device)
+    def forward(self, context_word, context_char, answer_word, answer_char, question_word, question_char):
+        # self, batch
+        cmask = self.make_enc_mask(context_word).to(self.device)
+        amask = self.make_enc_mask(answer_word).to(self.device)
         # emb size: bath x seq_len x (word_dim + char_channel_size)
-        C_emb = self.emb(batch.c_char, batch.c_word[0])
-        A_emb = self.emb(batch.a_char, batch.a_word[0])
+        C_emb = self.emb(context_char, context_word)
+        A_emb = self.emb(answer_char, answer_word)
         
         # encoding after conv batch x d_model x seq_len
         C = self.context_conv(C_emb.permute(0, 2, 1))
@@ -438,9 +441,9 @@ class Baseline(nn.Module):
         
         encoded = self.ca_att(Ce, Ae, cmask, amask)
         
-        trg_mask = self.make_dec_mask(batch.q_word_decoder[0][:,:-1]).to(self.device)
+        trg_mask = self.make_dec_mask(question_word).to(self.device)
         
-        Q_emb = self.emb(batch.q_char_decoder[:,:-1], batch.q_word_decoder[0][:,:-1])
+        Q_emb = self.emb(question_char, question_word)
         output, attention = self.decoder(Q_emb, encoded, trg_mask, cmask)
         
         return output, attention
