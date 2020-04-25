@@ -214,8 +214,6 @@ def main():
     parser.add_argument('--train-file', default='train-v2.0.json')
     
     parser.add_argument('--dropout', default=0.2, type=float)
-    parser.add_argument('--epoch', default=12, type=int)
-    
     parser.add_argument('--gpu', default=0, type=int)
     parser.add_argument('--hidden-size', default=100, type=int)
     
