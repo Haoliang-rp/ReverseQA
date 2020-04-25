@@ -87,7 +87,7 @@ class SQuAD():
         self.WORD_DECODER.build_vocab(self.train, self.dev, vectors=GloVe(name='6B', dim=args.word_dim))
 
         print("building iterators...")
-        device = torch.device("cuda:{}".format(args.gpu) if torch.cuda.is_available() else "cpu")
+        device = args.device#torch.device("cuda:{}".format(args.gpu) if torch.cuda.is_available() else "cpu")
         self.train_iter = data.BucketIterator(
             self.train,
             batch_size=args.train_batch_size,
