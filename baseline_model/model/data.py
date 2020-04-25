@@ -143,7 +143,7 @@ class SQuAD():
                         for ans in qa['answers']:
                             answer = ans['text']
                             
-                            cur_answer_len = len(word_tokenize(question))
+                            cur_answer_len = len(word_tokenize(answer))
                             if cur_answer_len > self.max_len_answer:
                                 continue
                             

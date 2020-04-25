@@ -242,7 +242,7 @@ class EncoderBlock(nn.Module):
         self.d_model = d_model
         self.n_head = n_head
         # pos encoding
-        self.pos_embedding = nn.Embedding(max_length+2, self.d_model)
+        self.pos_embedding = nn.Embedding(max_length, self.d_model)
         self.device = device
         
         # conv block 
@@ -348,7 +348,7 @@ class Decoder(nn.Module):
         self.max_length = max_length
         self.device = device
         
-        self.pos_embedding = nn.Embedding(self.max_length+2, hidden_size*2)
+        self.pos_embedding = nn.Embedding(self.max_length, hidden_size*2)
         
         self.fc = nn.Linear(hidden_size*2, d_model*n_head, bias=True)
         
@@ -394,8 +394,8 @@ class Baseline(nn.Module):
         self.answer_conv = DepthwiseSeparableConv(self.args.word_dim + self.args.char_channel_size, args.d_model, args.kernel_size).to(self.device)
         
         # multihead self attention
-        self.c_enc = EncoderBlock(conv_num=args.conv_num, d_model=args.d_model, k=args.kernel_size, max_length=args.max_len_context, n_head=args.n_head, dropout=args.dropout, device=args.device).to(self.device)
-        self.a_enc = EncoderBlock(conv_num=args.conv_num, d_model=args.d_model, k=args.kernel_size, max_length=args.max_len_answer, n_head=args.n_head, dropout=args.dropout, device=args.device).to(self.device)
+        self.c_enc = EncoderBlock(conv_num=args.conv_num, d_model=args.d_model, k=args.kernel_size, max_length=args.max_len_context+2, n_head=args.n_head, dropout=args.dropout, device=args.device).to(self.device)
+        self.a_enc = EncoderBlock(conv_num=args.conv_num, d_model=args.d_model, k=args.kernel_size, max_length=args.max_len_answer+5, n_head=args.n_head, dropout=args.dropout, device=args.device).to(self.device)
         
         # query and context attention
         self.ca_att = CQAttention(d_model=args.d_model, dropout=args.dropout).to(self.device)
