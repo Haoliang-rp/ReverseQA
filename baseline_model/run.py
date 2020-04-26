@@ -239,7 +239,7 @@ def main():
     parser.add_argument('--epoch', default=12, type=int)
     
     args = parser.parse_args()
-    setattr(args, 'device', torch.device("cpu"))#"cuda:{}".format(args.gpu) if torch.cuda.is_available() else 
+    setattr(args, 'device', torch.device("cuda:{}".format(args.gpu) if torch.cuda.is_available() else "cpu"))#
     print('loading SQuAD data...')
     data = SQuAD(args)
     setattr(args, 'char_vocab_size', len(data.CHAR.vocab))
