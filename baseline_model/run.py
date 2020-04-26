@@ -90,7 +90,7 @@ def test(args, model, data):#, ema
 #            backup_params.register(name, param.data)
 #            param.data.copy_(ema.get(name))
             
-    with torch.set_grad_enable(False):
+    with torch.set_grad_enabled(False):
         for batch in iter(data.dev_iter):
             context_word, context_char = batch.c_word[0], batch.c_char
             answer_word, answer_char = batch.a_word[0], batch.a_char
