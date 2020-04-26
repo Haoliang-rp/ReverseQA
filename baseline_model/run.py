@@ -20,7 +20,7 @@ def train(args, data):
     ema = EMA(args.exp_decay_rate)
 
     criterion = nn.CrossEntropyLoss(ignore_index = args.pad_idx_decoder)
-    optimizer = torch.optim.Adam(model.parameters(), lr = args.learning_rate, eps=1e-7, weight_decay=3e-7)
+    optimizer = torch.optim.Adam(model.parameters(), lr = args.learning_rate)
 #    
     writer = SummaryWriter(log_dir='runs/' + args.model_time)
     
