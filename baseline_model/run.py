@@ -9,7 +9,6 @@ from time import gmtime, strftime
 
 from model.model import Baseline
 from model.data import SQuAD, word_tokenize
-from model.ema import EMA
 #import evaluate
 from torchtext.data.metrics import bleu_score
 from tqdm import tqdm
@@ -18,21 +17,20 @@ import time
 def train(args, data):
     model = Baseline(args, data.WORD.vocab.vectors).to(args.device)
     
-#    ema = EMA(args.exp_decay_rate)
-#    for name, param in model.named_parameters():
-#        if param.requires_grad:
-#            ema.update(name, param.data)
-#    parameters = filter(lambda p:p.requires_grad, model.parameters())
+    ema = EMA(args.exp_decay_rate)
 
     criterion = nn.CrossEntropyLoss(ignore_index = args.pad_idx_decoder)
-    optimizer = torch.optim.Adam(model.parameters(), lr = args.learning_rate)
+    optimizer = torch.optim.Adam(model.parameters(), lr = args.learning_rate, eps=1e-7)
 #    
-#    writer = SummaryWriter(log_dir='runs/' + args.model_time)
-#    
-#    model.train()
+    writer = SummaryWriter(log_dir='runs/' + args.model_time)
+    
+    model.train()
+    
     loss, last_epoch = 0, -1
+
+    scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda epoch: (1 - epoch / args.epoch)**args.decaying_rate)
 #    max_dev_exact, max_dev_f1 = -1, -1
-#    
+    
 #    test_bound = 2
 #    iterator = data.train_iter
 #    
@@ -64,12 +62,12 @@ def train(args, data):
         loss += batch_loss.item()
         batch_loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), args.CLIP)
+        
         optimizer.step()
+        scheduler.step()
         
-        
-#        for name, param in model.named_parameters():
-#            if param.requires_grad:
-#                ema.update(name, param.data)
+        for name, p in model.named_parameters():
+            if p.requires_grad: ema.update_parameter(name, p)
 #        
         if (i + 1) % args.print_freq == 0:
             dev_loss = test(args, model, data)#, ema
@@ -77,6 +75,11 @@ def train(args, data):
             epoch_mins, epoch_secs = epoch_time(start_time, end_time)
             print('Time: {}m {}s'.format(epoch_mins, epoch_secs))
             print('train loss: {} | dev loss: {}'.format(batch_loss, dev_loss))
+            
+            c = (i + 1) // args.print_freq
+
+            writer.add_scalar('loss/train', batch_loss, c)
+            writer.add_scalar('loss/dev', dev_loss, c)
             
         if (i + 1) % args.save_freq == 0:
             print('saving model')
@@ -211,8 +214,30 @@ def generate_question(args, c_word, c_char, a_word, a_char, model, data):
         if pred_token == WORD_DECODER.vocab.stoi[WORD_DECODER.eos_token]:
             break
     return word, attention
-    
-    
+
+class EMA(object):
+    def __init__(self, decay):
+        self.decay = decay
+        self.shadows = {}
+        self.devices = {}
+
+    def __len__(self):
+        return len(self.shadows)
+
+    def get(self, name: str):
+        return self.shadows[name].to(self.devices[name])
+
+    def set(self, name: str, param: nn.Parameter):
+        self.shadows[name] = param.data.to('cpu').clone()
+        self.devices[name] = param.data.device
+
+    def update_parameter(self, name: str, param: nn.Parameter):
+        if name in self.shadows:
+            data = param.data
+            new_shadow = self.decay * data + (1.0 - self.decay) * self.get(name)
+            param.data.copy_(new_shadow)
+            self.shadows[name] = new_shadow.to('cpu').clone()
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--char-dim', default=8, type=int)
@@ -228,7 +253,7 @@ def main():
     parser.add_argument('--gpu', default=0, type=int)
     parser.add_argument('--hidden-size', default=100, type=int)
     
-    parser.add_argument('--learning-rate', default=0.0005, type=float)
+    parser.add_argument('--learning-rate', default=0.005, type=float)
     parser.add_argument('--exp-decay-rate', default=0.999, type=float)
     
     parser.add_argument('--word-dim', default=100, type=int)
@@ -248,7 +273,8 @@ def main():
     
     parser.add_argument('--print-freq', default=250, type=int)
     parser.add_argument('--save-freq', default=500, type=int)
-    parser.add_argument('--epoch', default=12, type=int)
+    parser.add_argument('--epoch', default=20, type=int)
+    parser.add_argument('--decaying-rate', default=0.9, type=int)
     
     args = parser.parse_args()
     setattr(args, 'device', torch.device("cuda:{}".format(args.gpu) if torch.cuda.is_available() else "cpu"))#
