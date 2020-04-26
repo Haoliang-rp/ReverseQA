@@ -17,7 +17,7 @@ import time
 def train(args, data):
     model = Baseline(args, data.WORD.vocab.vectors).to(args.device)
     
-    ema = EMA(args.exp_decay_rate)
+#    ema = EMA(args.exp_decay_rate)
 
     criterion = nn.CrossEntropyLoss(ignore_index = args.pad_idx_decoder)
     optimizer = torch.optim.Adam(model.parameters(), lr = args.learning_rate)
@@ -67,8 +67,8 @@ def train(args, data):
         optimizer.step()
         scheduler.step()
         
-        for name, p in model.named_parameters():
-            if p.requires_grad: ema.update_parameter(name, p)
+#        for name, p in model.named_parameters():
+#            if p.requires_grad: ema.update_parameter(name, p)
 #        
         if (i + 1) % args.print_freq == 0:
             dev_loss = test(args, model, data)#, ema
