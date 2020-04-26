@@ -13,7 +13,6 @@ from model.ema import EMA
 #import evaluate
 from torchtext.data.metrics import bleu_score
 from tqdm import tqdm
-import math
 import time
 
 def train(args, data):
@@ -67,17 +66,17 @@ def train(args, data):
         torch.nn.utils.clip_grad_norm_(model.parameters(), args.CLIP)
         optimizer.step()
         
-        end_time = time.time()
-        epoch_mins, epoch_secs = epoch_time(start_time, end_time)
+        
 #        for name, param in model.named_parameters():
 #            if param.requires_grad:
 #                ema.update(name, param.data)
 #        
         if (i + 1) % args.print_freq == 0:
-            print('Time: {}m {}s'.format(epoch_mins, epoch_secs))
             dev_loss = test(args, model, data)#, ema
+            end_time = time.time()
+            epoch_mins, epoch_secs = epoch_time(start_time, end_time)
+            print('Time: {}m {}s'.format(epoch_mins, epoch_secs))
             print('train loss: {} | dev loss: {}'.format(batch_loss, dev_loss))
-            print('tran loss PPL: {} | dev loss PPL: {}'.format(math.exp(batch_loss), math.exp(dev_loss)))
             
         if (i + 1) % args.save_freq == 0:
             print('saving model')
