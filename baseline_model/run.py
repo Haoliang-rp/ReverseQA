@@ -13,6 +13,8 @@ from model.ema import EMA
 #import evaluate
 from torchtext.data.metrics import bleu_score
 from tqdm import tqdm
+import math
+import time
 
 def train(args, data):
     model = Baseline(args, data.WORD.vocab.vectors).to(args.device)
@@ -36,6 +38,8 @@ def train(args, data):
 #    iterator = data.train_iter
 #    
     for i, batch in enumerate(data.train_iter):
+        start_time = time.time()
+        
         present_epoch = int(data.train_iter.epoch)
         if present_epoch == args.epoch:
             break
@@ -63,17 +67,20 @@ def train(args, data):
         torch.nn.utils.clip_grad_norm_(model.parameters(), args.CLIP)
         optimizer.step()
         
-        
-    
+        end_time = time.time()
+        epoch_mins, epoch_secs = epoch_time(start_time, end_time)
 #        for name, param in model.named_parameters():
 #            if param.requires_grad:
 #                ema.update(name, param.data)
 #        
         if (i + 1) % args.print_freq == 0:
+            print('Time: {}m {}s'.format(epoch_mins, epoch_secs))
             dev_loss = test(args, model, data)#, ema
-            print('train loss: {} / dev loss: {}'.format(loss, dev_loss))
+            print('train loss: {} | dev loss: {}'.format(batch_loss, dev_loss))
+            print('tran loss PPL: {} | dev loss PPL: {}'.format(math.exp(batch_loss), math.exp(dev_loss)))
             
         if (i + 1) % args.save_freq == 0:
+            print('saving model')
             torch.save(model.state_dict(), 'saved_models/BiDAF_{}.pt'.format(args.model_time))
  
     return model
@@ -110,6 +117,12 @@ def test(args, model, data):#, ema
 #                param.data.copy_(backup_params.get(name))
 
     return loss
+
+def epoch_time(start_time, end_time):
+    elapsed_time = end_time - start_time
+    elapsed_mins = int(elapsed_time / 60)
+    elapsed_secs = int(elapsed_time - (elapsed_mins * 60))
+    return elapsed_mins, elapsed_secs
 
 def calculate_bleu(data, model, device, max_len = 30):
     labels = []
