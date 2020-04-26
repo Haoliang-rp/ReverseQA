@@ -84,7 +84,7 @@ def test(args, model, data):#, ema
     
     model.eval()
     
-    backup_params = EMA(0)
+#    backup_params = EMA(0)
 #    for name, param in model.named_parameters():
 #        if param.requires_grad:
 #            backup_params.register(name, param.data)
@@ -105,9 +105,9 @@ def test(args, model, data):#, ema
             batch_loss = criterion(X, label)
             loss += batch_loss.item()
             
-        for name, param in model.named_parameters():
-            if param.requires_grad:
-                param.data.copy_(backup_params.get(name))
+#        for name, param in model.named_parameters():
+#            if param.requires_grad:
+#                param.data.copy_(backup_params.get(name))
 
     return loss
 
