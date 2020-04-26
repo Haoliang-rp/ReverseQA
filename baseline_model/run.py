@@ -20,7 +20,7 @@ def train(args, data):
     ema = EMA(args.exp_decay_rate)
 
     criterion = nn.CrossEntropyLoss(ignore_index = args.pad_idx_decoder)
-    optimizer = torch.optim.Adam(model.parameters(), lr = args.learning_rate, eps=1e-7)
+    optimizer = torch.optim.Adam(model.parameters(), lr = args.learning_rate, eps=1e-7, weight_decay=3e-7)
 #    
     writer = SummaryWriter(log_dir='runs/' + args.model_time)
     
@@ -28,7 +28,8 @@ def train(args, data):
     
     loss, last_epoch = 0, -1
 
-    scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda epoch: (1 - epoch / args.epoch)**args.decaying_rate)
+    #scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda epoch: (1 - epoch / args.epoch)**args.decaying_rate)
+    scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=args.decaying_rate)
 #    max_dev_exact, max_dev_f1 = -1, -1
     
 #    test_bound = 2
@@ -274,7 +275,7 @@ def main():
     parser.add_argument('--print-freq', default=250, type=int)
     parser.add_argument('--save-freq', default=500, type=int)
     parser.add_argument('--epoch', default=20, type=int)
-    parser.add_argument('--decaying-rate', default=0.9, type=int)
+    parser.add_argument('--decaying-rate', default=0.98, type=int)
     
     args = parser.parse_args()
     setattr(args, 'device', torch.device("cuda:{}".format(args.gpu) if torch.cuda.is_available() else "cpu"))#
