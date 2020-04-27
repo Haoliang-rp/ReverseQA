@@ -29,7 +29,7 @@ def train(args, data):
     loss, last_epoch = 0, -1
 
     #scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda epoch: (1 - epoch / args.epoch)**args.decaying_rate)
-    scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=args.exp_decay_rate)
+#    scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=args.exp_decay_rate)
 #    max_dev_exact, max_dev_f1 = -1, -1
     
 #    test_bound = 2
@@ -65,7 +65,7 @@ def train(args, data):
         torch.nn.utils.clip_grad_norm_(model.parameters(), args.CLIP)
         
         optimizer.step()
-        scheduler.step()
+#        scheduler.step()
         
 #        for name, p in model.named_parameters():
 #            if p.requires_grad: ema.update_parameter(name, p)
