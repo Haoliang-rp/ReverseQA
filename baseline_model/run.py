@@ -27,6 +27,7 @@ def train(args, data):
     model.train()
     
     loss, last_epoch = 0, -1
+    best_dev_loss = 20000
 
     #scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda epoch: (1 - epoch / args.epoch)**args.decaying_rate)
 #    scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=args.exp_decay_rate)
@@ -72,6 +73,8 @@ def train(args, data):
 #        
         if (i + 1) % args.print_freq == 0:
             dev_loss = test(args, model, data)#, ema
+            best_dev_loss = min(dev_loss, best_dev_loss)
+            
             end_time = time.time()
             epoch_mins, epoch_secs = epoch_time(start_time, end_time)
             print('Time: {}m {}s'.format(epoch_mins, epoch_secs))
@@ -82,10 +85,10 @@ def train(args, data):
             writer.add_scalar('loss/train', batch_loss, c)
             writer.add_scalar('loss/dev', dev_loss, c)
             
-        if (i + 1) % args.save_freq == 0:
-            print('saving model')
-            torch.save(model.state_dict(), 'saved_models/BiDAF_{}.pt'.format(args.model_time))
- 
+            if (i + 1) % args.save_freq == 0 and dev_loss <= best_dev_loss:
+                print('saving model')
+                torch.save(model.state_dict(), 'saved_models/BiDAF_{}.pt'.format(args.model_time))
+     
     return model
 
 def test(args, model, data):#, ema
