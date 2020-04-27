@@ -20,14 +20,15 @@ def train(args, data):
 #    ema = EMA(args.exp_decay_rate)
 
     criterion = nn.CrossEntropyLoss(ignore_index = args.pad_idx_decoder)
-    optimizer = torch.optim.Adam(model.parameters(), lr = args.learning_rate)
-#    
+    optimizer = torch.optim.AdamW(model.parameters(), lr = args.learning_rate)
+
     writer = SummaryWriter(log_dir='runs/' + args.model_time)
     
     model.train()
     
     loss, last_epoch = 0, -1
     best_dev_loss = 20000
+    best_train_loss = 200
 
     #scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda epoch: (1 - epoch / args.epoch)**args.decaying_rate)
 #    scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=args.exp_decay_rate)
@@ -75,6 +76,8 @@ def train(args, data):
             dev_loss = test(args, model, data)#, ema
             best_dev_loss = min(dev_loss, best_dev_loss)
             
+            best_train_loss = min(batch_loss, best_train_loss)
+            
             end_time = time.time()
             epoch_mins, epoch_secs = epoch_time(start_time, end_time)
             print('Time: {}m {}s'.format(epoch_mins, epoch_secs))
@@ -86,8 +89,12 @@ def train(args, data):
             writer.add_scalar('loss/dev', dev_loss, c)
             
             if (i + 1) % args.save_freq == 0 and dev_loss <= best_dev_loss:
-                print('saving model')
-                torch.save(model.state_dict(), 'saved_models/BiDAF_{}.pt'.format(args.model_time))
+                print('saving model(dev)')
+                torch.save(model.state_dict(), 'saved_models/BASE_{}.pt'.format(args.model_time))
+            
+            if (i + 1) % args.save_freq == 0 and batch_loss <= best_train_loss:
+                print('saving model(train)')
+                torch.save(model.state_dict(), 'saved_models/BASE_Train_{}.pt'.format(args.model_time))
      
     return model
 
