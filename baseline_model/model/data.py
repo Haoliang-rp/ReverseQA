@@ -98,8 +98,10 @@ class SQuAD():
                 validation='{}l'.format(args.dev_file),
                 format='json',
                 fields=dict_fields)
-
-            os.makedirs(dataset_path)
+            try:
+                os.makedirs(dataset_path)
+            except:
+                pass
             torch.save(self.train.examples, train_examples_path)
             torch.save(self.dev.examples, dev_examples_path)
 
