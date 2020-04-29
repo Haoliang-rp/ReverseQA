@@ -447,4 +447,68 @@ class Baseline(nn.Module):
         output, attention = self.decoder(Q_emb, encoded, trg_mask, cmask)
         
         return output, attention
-#self.pos_emb = nn.Embedding()
+
+
+class Decoder_Bert(nn.Module):
+    def __init__(self, output_dim, n_layers, hidden_size, d_model, n_head, dropout, max_length, device):
+        super().__init__()
+        self.hidden_size = hidden_size
+        self.dropout = dropout
+        self.max_length = max_length
+        self.device = device
+        
+        self.pos_embedding = nn.Embedding(self.max_length, hidden_size*2)
+        
+        self.fc = nn.Linear(hidden_size*2, d_model*n_head, bias=True)
+        
+        self.layers = nn.ModuleList([DecoderLayer(d_model, 
+                                                  n_head,  
+                                                  dropout,
+                                                 device)
+                                     for _ in range(n_layers)])
+        
+        self.dropout = nn.Dropout(dropout)
+        
+        self.fc_out = nn.Linear(d_model*4, output_dim)
+    
+    def forward(self, question_emb, enc_emb, question_mask, enc_mask):
+        # question: batch_size, question_len x hidden_size*2
+        
+        for layer in self.layers:
+            ques_emb, attention = layer(question_emb, enc_emb, question_mask, enc_mask) 
+        
+        output = self.fc_out(ques_emb)
+        
+        return output, attention
+
+class Baseline_Bert(nn.Module):
+    def __init__(self, args):
+        super().__init__()
+        self.args = args
+        self.device = args.device
+        # decoder
+        self.decoder = Decoder_Bert(args.output_dim, n_layers=args.DEC_LAYERS, hidden_size=args.hidden_size, d_model=args.d_model, n_head=args.n_head, dropout=args.dropout, max_length=args.max_len_question+2, device=self.device).to(self.device)
+    
+    def make_dec_mask(self, trg):
+        trg_pad_mask = (trg != self.args.pad_idx_encoder).unsqueeze(1).unsqueeze(2).to(self.device)
+        # batch_size  x 1 x 1 x seq_len
+        
+        seq_len = trg.shape[1]
+        
+        trg_sub_mask = torch.tril(torch.ones((seq_len, seq_len))).bool().to(self.device)
+        # seq_len x seq_len
+        
+        trg_mask = trg_pad_mask & trg_sub_mask
+        # batch_size, 1, seq_len, seq_len
+        
+        return trg_mask
+
+    def forward(self, encoded, question_word, Q_emb, cmask):
+        
+        # question_word = batch.q_word_decoder[0][:,:-1]
+        # question_char = batch.q_char_decoder[:,:-1]
+        trg_mask = self.make_dec_mask(question_word).to(self.device)
+        
+        output, attention = self.decoder(Q_emb, encoded, trg_mask, cmask)
+        
+        return output, attention

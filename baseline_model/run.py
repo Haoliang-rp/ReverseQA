@@ -7,15 +7,21 @@ from torch import nn, optim
 from tensorboardX import SummaryWriter
 from time import gmtime, strftime
 
-from model.model import Baseline
+from model.model import Baseline, Baseline_Bert
 from model.data import SQuAD, word_tokenize
 #import evaluate
 from torchtext.data.metrics import bleu_score
 from tqdm import tqdm
 import time
 
+from transformers import AlbertModel, AlbertTokenizer
+
 def train(args, data):
-    model = Baseline(args, data.WORD.vocab.vectors).to(args.device)
+    if args.encoder_type == 'bert':
+        model = Baseline_Bert().to(args.device)
+        bert_model = AlbertModel.from_pretrained('albert-base-v2').to(args.device)
+    else:
+        model = Baseline(args, data.WORD.vocab.vectors).to(args.device)
     
 #    ema = EMA(args.exp_decay_rate)
 
@@ -24,7 +30,7 @@ def train(args, data):
 
     writer = SummaryWriter(log_dir='runs/' + args.model_time)
     
-    model.train()
+    
     
     loss, last_epoch = 0, -1
     best_dev_loss = 20000
@@ -36,7 +42,7 @@ def train(args, data):
     
 #    test_bound = 2
 #    iterator = data.train_iter
-#    
+    model.train()
     for i, batch in enumerate(data.train_iter):
         start_time = time.time()
         
@@ -48,17 +54,48 @@ def train(args, data):
             print('epoch:', present_epoch + 1)
         last_epoch = present_epoch
         
-        optimizer.zero_grad()
+        if args.encoder_type == 'bert':
+            training_batch = list(zip(batch.answer, batch.context))
+            training_batch_in = args.tokenizer.batch_encode_plus(training_batch, add_special_tokens=True, pad_to_max_length=True, return_tensors="pt")
+            
+            question_batch_in = args.decoder_tokenizer.batch_encode_plus(batch.question, add_special_tokens=True, pad_to_max_length=True, return_tensors="pt")
+            
+            with torch.no_grad():
+                input_ids_tensor = training_batch_in['input_ids'].to(args.device)
+                attention_mask_tensor = training_batch_in['attention_mask'].to(args.device)
+                token_type_ids_tensor = training_batch_in['token_type_ids'].to(args.device)
+                outputs = bert_model(input_ids_tensor, attention_mask_tensor, token_type_ids_tensor)
+                encoded = outputs[0]
+                
+                q_input_ids_tensor = question_batch_in['input_ids'][:,:-1].to(args.device)
+                q_attention_mask_tensor = question_batch_in['attention_mask'][:,:-1].to(args.device)
+                q_token_type_ids_tensor = question_batch_in['token_type_ids'][:,:-1].to(args.device)
+                
+                Q_emb = bert_model(q_input_ids_tensor, q_attention_mask_tensor, q_token_type_ids_tensor)[0]
+            
+            cmask = token_type_ids_tensor.unsqueeze(1).unsqueeze(2)#.unsqueeze(2).repeat(1, 1, 768)
+            
+            optimizer.zero_grad()
+            question_word = question_batch_in['input_ids'][:,:-1]
+            X, _ = model(encoded, question_word, Q_emb, cmask)
+            output_dim = X.shape[-1]
+            X = X.contiguous().view(-1, output_dim)
+            
+            label = question_batch_in['input_ids'][:,1:].contiguous().view(-1).to(args.device)
         
-        context_word, context_char = batch.c_word[0], batch.c_char
-        answer_word, answer_char = batch.a_word[0], batch.a_char
-        question_word, question_char = batch.q_word_decoder[0][:,:-1], batch.q_char_decoder[:,:-1]
-        
-        X, _ = model(context_word, context_char, answer_word, answer_char, question_word, question_char)
-        output_dim = X.shape[-1]
-        X = X.contiguous().view(-1, output_dim)
-
-        label = batch.q_word_decoder[0][:, 1:].contiguous().view(-1)
+        else:
+            model.train()
+            optimizer.zero_grad()
+            
+            context_word, context_char = batch.c_word[0], batch.c_char
+            answer_word, answer_char = batch.a_word[0], batch.a_char
+            question_word, question_char = batch.q_word_decoder[0][:,:-1], batch.q_char_decoder[:,:-1]
+            
+            X, _ = model(context_word, context_char, answer_word, answer_char, question_word, question_char)
+            output_dim = X.shape[-1]
+            X = X.contiguous().view(-1, output_dim)
+    
+            label = batch.q_word_decoder[0][:, 1:].contiguous().view(-1)
 #        
         
         batch_loss = criterion(X, label)
@@ -269,7 +306,6 @@ def main():
     
     parser.add_argument('--word-dim', default=100, type=int)
     parser.add_argument('--n-head', default=4, type=int)
-    parser.add_argument('--d-model', default=96, type=int)
     
     parser.add_argument('--DEC-LAYERS', default=3, type=int)
     parser.add_argument('--DEC-HEADS', default=4, type=int)
@@ -287,16 +323,28 @@ def main():
     parser.add_argument('--epoch', default=20, type=int)
 #    parser.add_argument('--decaying-rate', default=0.98, type=int)
     
+    parser.add_argument('--encoder-type', default='bert', type=int)
+    
     args = parser.parse_args()
     setattr(args, 'device', torch.device("cuda:{}".format(args.gpu) if torch.cuda.is_available() else "cpu"))#
     print('loading SQuAD data...')
+    
     data = SQuAD(args)
-    setattr(args, 'char_vocab_size', len(data.CHAR.vocab))
-    setattr(args, 'word_vocab_size', len(data.WORD.vocab))
-    setattr(args, 'pad_idx_encoder', data.WORD.vocab.stoi[data.WORD.pad_token])
-    setattr(args, 'pad_idx_decoder', data.WORD_DECODER.vocab.stoi[data.WORD_DECODER.pad_token])
-    setattr(args, 'output_dim', len(data.WORD_DECODER.vocab))
-    setattr(args, 'dataset_file', '.data/squad/{}'.format(args.dev_file))
+    if args.encoder_type == 'bert':
+        setattr(args, 'tokenizer', default=AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True, padding_side='left'))
+        setattr(args, 'decoder_tokenizer', default=AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True, padding_side='right'))
+        setattr(args, 'd_model', default=768 // args.n_head)
+        setattr(args, 'output_dim', args.tokenizer.vocab_size)
+        setattr(args, 'pad_idx_decoder', args.decoder_tokenizer.pad_token_id)
+    else:
+        setattr(args, 'd_model', default=96)
+        setattr(args, 'char_vocab_size', len(data.CHAR.vocab))
+        setattr(args, 'word_vocab_size', len(data.WORD.vocab))
+        setattr(args, 'pad_idx_encoder', data.WORD.vocab.stoi[data.WORD.pad_token])
+        setattr(args, 'pad_idx_decoder', data.WORD_DECODER.vocab.stoi[data.WORD_DECODER.pad_token])
+        setattr(args, 'output_dim', len(data.WORD_DECODER.vocab))
+#        setattr(args, 'dataset_file', '.data/squad/{}'.format(args.dev_file))
+        
     setattr(args, 'prediction_file', 'prediction{}.out'.format(args.gpu))
     setattr(args, 'model_time', strftime('%H:%M:%S', gmtime()))
     
