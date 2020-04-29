@@ -18,7 +18,7 @@ from transformers import AlbertModel, AlbertTokenizer
 
 def train(args, data):
     if args.encoder_type == 'bert':
-        model = Baseline_Bert().to(args.device)
+        model = Baseline_Bert(args).to(args.device)
         bert_model = AlbertModel.from_pretrained('albert-base-v2').to(args.device)
 #        tokenizer = AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True, padding_side='left')
 #        decoder_tokenizer = AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True, padding_side='right')
