@@ -490,7 +490,7 @@ class Baseline_Bert(nn.Module):
         self.decoder = Decoder_Bert(args.output_dim, n_layers=args.DEC_LAYERS, hidden_size=args.hidden_size, d_model=args.d_model, n_head=args.n_head, dropout=args.dropout, max_length=args.max_len_question+2, device=self.device).to(self.device)
     
     def make_dec_mask(self, trg):
-        trg_pad_mask = (trg != self.args.pad_idx_encoder).unsqueeze(1).unsqueeze(2).to(self.device)
+        trg_pad_mask = (trg != self.args.pad_idx_decoder).unsqueeze(1).unsqueeze(2).to(self.device)
         # batch_size  x 1 x 1 x seq_len
         
         seq_len = trg.shape[1]
