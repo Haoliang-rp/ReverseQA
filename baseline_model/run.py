@@ -70,6 +70,8 @@ def train(args, data):
                 input_ids_tensor = training_batch_in['input_ids'].to(args.device)
                 attention_mask_tensor = training_batch_in['attention_mask'].to(args.device)
                 token_type_ids_tensor = training_batch_in['token_type_ids'].to(args.device)
+                
+                if input_ids_tensor.size(1) > 511: continue
                 outputs = bert_model(input_ids_tensor, attention_mask_tensor, token_type_ids_tensor)
                 encoded = outputs[0]
                 
