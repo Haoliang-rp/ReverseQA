@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 import argparse
-import copy, json, os
+import os
 
 import torch
-from torch import nn, optim
+from torch import nn
 from tensorboardX import SummaryWriter
 from time import gmtime, strftime
 
 from model.model import Baseline, Baseline_Bert
-from model.data import SQuAD, word_tokenize
+from model.data import SQuAD
 #import evaluate
 from torchtext.data.metrics import bleu_score
 from tqdm import tqdm
@@ -47,6 +47,8 @@ def train(args, data):
 #    test_bound = 2
 #    iterator = data.train_iter
     model.train()
+    bert_model.eval()
+    print('training')
     for i, batch in enumerate(tqdm(data.train_iter)):
         start_time = time.time()
         
@@ -154,7 +156,7 @@ def test(args, model, data):#, ema
         bert_model = AlbertModel.from_pretrained('albert-base-v2').to(args.device)
 #        tokenizer = AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True, padding_side='left')
 #        decoder_tokenizer = AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True, padding_side='right')
-
+    print('testing')
     with torch.set_grad_enabled(False):
         for batch in iter(tqdm(data.dev_iter)):
             if args.encoder_type == 'bert':
