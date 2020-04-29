@@ -323,7 +323,7 @@ def main():
     parser.add_argument('--epoch', default=20, type=int)
 #    parser.add_argument('--decaying-rate', default=0.98, type=int)
     
-    parser.add_argument('--encoder-type', default='bert', type=int)
+    parser.add_argument('--encoder-type', default='bert')
     
     args = parser.parse_args()
     setattr(args, 'device', torch.device("cuda:{}".format(args.gpu) if torch.cuda.is_available() else "cpu"))#
