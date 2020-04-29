@@ -47,7 +47,7 @@ def train(args, data):
 #    test_bound = 2
 #    iterator = data.train_iter
     model.train()
-    for i, batch in enumerate(data.train_iter):
+    for i, batch in enumerate(tqdm(data.train_iter)):
         start_time = time.time()
         
         present_epoch = int(data.train_iter.epoch)
@@ -156,7 +156,7 @@ def test(args, model, data):#, ema
 #        decoder_tokenizer = AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True, padding_side='right')
 
     with torch.set_grad_enabled(False):
-        for batch in iter(data.dev_iter):
+        for batch in iter(tqdm(data.dev_iter)):
             if args.encoder_type == 'bert':
                 training_batch = list(zip(batch.answer, batch.context))
                 training_batch_in = args.tokenizer.batch_encode_plus(training_batch, add_special_tokens=True, pad_to_max_length=True, return_tensors="pt")
