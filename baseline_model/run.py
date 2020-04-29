@@ -73,12 +73,16 @@ def train(args, data):
                 outputs = bert_model(input_ids_tensor, attention_mask_tensor, token_type_ids_tensor)
                 encoded = outputs[0]
                 
-                q_input_ids_tensor = question_batch_in['input_ids'][:,:-1].to(args.device)
+                try:
+                    q_input_ids_tensor = question_batch_in['input_ids'][:,:-1].to(args.device)
+                except:
+                    print(q_input_ids_tensor.size())
                 q_attention_mask_tensor = question_batch_in['attention_mask'][:,:-1].to(args.device)
                 q_token_type_ids_tensor = question_batch_in['token_type_ids'][:,:-1].to(args.device)
                 
                 Q_emb = bert_model(q_input_ids_tensor, q_attention_mask_tensor, q_token_type_ids_tensor)[0]
-            
+                
+                
             cmask = token_type_ids_tensor.unsqueeze(1).unsqueeze(2)#.unsqueeze(2).repeat(1, 1, 768)
             
             optimizer.zero_grad()
