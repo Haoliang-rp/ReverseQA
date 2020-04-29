@@ -146,18 +146,50 @@ def test(args, model, data):#, ema
 #        if param.requires_grad:
 #            backup_params.register(name, param.data)
 #            param.data.copy_(ema.get(name))
-            
+    if args.encoder_type == 'bert':
+        bert_model = AlbertModel.from_pretrained('albert-base-v2').to(args.device)
+        
     with torch.set_grad_enabled(False):
         for batch in iter(data.dev_iter):
-            context_word, context_char = batch.c_word[0], batch.c_char
-            answer_word, answer_char = batch.a_word[0], batch.a_char
-            question_word, question_char = batch.q_word_decoder[0][:,:-1], batch.q_char_decoder[:,:-1]
+            if args.encoder_type == 'bert':
+                training_batch = list(zip(batch.answer, batch.context))
+                training_batch_in = args.tokenizer.batch_encode_plus(training_batch, add_special_tokens=True, pad_to_max_length=True, return_tensors="pt")
+                
+                question_batch_in = args.decoder_tokenizer.batch_encode_plus(batch.question, add_special_tokens=True, pad_to_max_length=True, return_tensors="pt")
+                
+                with torch.no_grad():
+                    input_ids_tensor = training_batch_in['input_ids'].to(args.device)
+                    attention_mask_tensor = training_batch_in['attention_mask'].to(args.device)
+                    token_type_ids_tensor = training_batch_in['token_type_ids'].to(args.device)
+                    outputs = bert_model(input_ids_tensor, attention_mask_tensor, token_type_ids_tensor)
+                    encoded = outputs[0]
+                    
+                    q_input_ids_tensor = question_batch_in['input_ids'][:,:-1].to(args.device)
+                    q_attention_mask_tensor = question_batch_in['attention_mask'][:,:-1].to(args.device)
+                    q_token_type_ids_tensor = question_batch_in['token_type_ids'][:,:-1].to(args.device)
+                    
+                    Q_emb = bert_model(q_input_ids_tensor, q_attention_mask_tensor, q_token_type_ids_tensor)[0]
+                
+                cmask = token_type_ids_tensor.unsqueeze(1).unsqueeze(2)#.unsqueeze(2).repeat(1, 1, 768)
+                
+                question_word = question_batch_in['input_ids'][:,:-1]
+                X, _ = model(encoded, question_word, Q_emb, cmask)
+                output_dim = X.shape[-1]
+                X = X.contiguous().view(-1, output_dim)
+                
+                label = question_batch_in['input_ids'][:,1:].contiguous().view(-1).to(args.device)
+                
+            else:
+                label = question_batch_in['input_ids'][:,1:].contiguous().view(-1).to(args.device)
+                context_word, context_char = batch.c_word[0], batch.c_char
+                answer_word, answer_char = batch.a_word[0], batch.a_char
+                question_word, question_char = batch.q_word_decoder[0][:,:-1], batch.q_char_decoder[:,:-1]
             
-            X, _ = model(context_word, context_char, answer_word, answer_char, question_word, question_char)
-            output_dim = X.shape[-1]
-            X = X.contiguous().view(-1, output_dim)
+                X, _ = model(context_word, context_char, answer_word, answer_char, question_word, question_char)
+                output_dim = X.shape[-1]
+                X = X.contiguous().view(-1, output_dim)
             
-            label = batch.q_word_decoder[0][:, 1:].contiguous().view(-1)
+                label = batch.q_word_decoder[0][:, 1:].contiguous().view(-1)
             
             batch_loss = criterion(X, label)
             loss += batch_loss.item()
@@ -166,7 +198,7 @@ def test(args, model, data):#, ema
 #            if param.requires_grad:
 #                param.data.copy_(backup_params.get(name))
 
-    return loss
+    return loss / len(data.dev_iter)
 
 def epoch_time(start_time, end_time):
     elapsed_time = end_time - start_time
