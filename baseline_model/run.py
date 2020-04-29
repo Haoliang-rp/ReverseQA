@@ -20,10 +20,10 @@ def train(args, data):
     if args.encoder_type == 'bert':
         model = Baseline_Bert().to(args.device)
         bert_model = AlbertModel.from_pretrained('albert-base-v2').to(args.device)
-        tokenizer = AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True, padding_side='left')
-        decoder_tokenizer = AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True, padding_side='right')
-        setattr(args, 'pad_idx_decoder', args.decoder_tokenizer.pad_token_id)
-        setattr(args, 'output_dim', args.tokenizer.vocab_size)
+#        tokenizer = AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True, padding_side='left')
+#        decoder_tokenizer = AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True, padding_side='right')
+#        setattr(args, 'pad_idx_decoder', args.decoder_tokenizer.pad_token_id)
+#        setattr(args, 'output_dim', args.tokenizer.vocab_size)
     else:
         model = Baseline(args, data.WORD.vocab.vectors).to(args.device)
     
@@ -60,9 +60,9 @@ def train(args, data):
         
         if args.encoder_type == 'bert':
             training_batch = list(zip(batch.answer, batch.context))
-            training_batch_in = tokenizer.batch_encode_plus(training_batch, add_special_tokens=True, pad_to_max_length=True, return_tensors="pt")
+            training_batch_in = args.tokenizer.batch_encode_plus(training_batch, add_special_tokens=True, pad_to_max_length=True, return_tensors="pt")
             
-            question_batch_in = decoder_tokenizer.batch_encode_plus(batch.question, add_special_tokens=True, pad_to_max_length=True, return_tensors="pt")
+            question_batch_in = args.decoder_tokenizer.batch_encode_plus(batch.question, add_special_tokens=True, pad_to_max_length=True, return_tensors="pt")
             
             with torch.no_grad():
                 input_ids_tensor = training_batch_in['input_ids'].to(args.device)
@@ -152,16 +152,16 @@ def test(args, model, data):#, ema
 #            param.data.copy_(ema.get(name))
     if args.encoder_type == 'bert':
         bert_model = AlbertModel.from_pretrained('albert-base-v2').to(args.device)
-        tokenizer = AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True, padding_side='left')
-        decoder_tokenizer = AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True, padding_side='right')
+#        tokenizer = AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True, padding_side='left')
+#        decoder_tokenizer = AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True, padding_side='right')
 
     with torch.set_grad_enabled(False):
         for batch in iter(data.dev_iter):
             if args.encoder_type == 'bert':
                 training_batch = list(zip(batch.answer, batch.context))
-                training_batch_in = tokenizer.batch_encode_plus(training_batch, add_special_tokens=True, pad_to_max_length=True, return_tensors="pt")
+                training_batch_in = args.tokenizer.batch_encode_plus(training_batch, add_special_tokens=True, pad_to_max_length=True, return_tensors="pt")
                 
-                question_batch_in = decoder_tokenizer.batch_encode_plus(batch.question, add_special_tokens=True, pad_to_max_length=True, return_tensors="pt")
+                question_batch_in = args.decoder_tokenizer.batch_encode_plus(batch.question, add_special_tokens=True, pad_to_max_length=True, return_tensors="pt")
                 
                 with torch.no_grad():
                     input_ids_tensor = training_batch_in['input_ids'].to(args.device)
@@ -369,7 +369,11 @@ def main():
     
     data = SQuAD(args)
     if args.encoder_type == 'bert':
-        setattr(args, 'd_model', default=768 // args.n_head)
+        setattr(args, 'd_model', 768 // args.n_head)
+        setattr(args, 'tokenizer', AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True, padding_side='left'))
+        setattr(args, 'decoder_tokenizer', AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True, padding_side='right'))
+        setattr(args, 'pad_idx_decoder', args.decoder_tokenizer.pad_token_id)
+        setattr(args, 'output_dim', args.tokenizer.vocab_size)
     else:
         setattr(args, 'd_model', default=96)
         setattr(args, 'char_vocab_size', len(data.CHAR.vocab))
