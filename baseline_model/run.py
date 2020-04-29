@@ -355,7 +355,7 @@ def main():
     if not os.path.exists('saved_models'):
         os.makedirs('saved_models')
     if best_model:
-        torch.save(best_model.state_dict(), 'saved_models/BiDAF_{}.pt'.format(args.model_time))
+        torch.save(best_model.state_dict(), 'saved_models/Baseline_{}_{}.pt'.format(args.encoder_type, args.model_time))
     print('training finished!')
 
 
