@@ -13,6 +13,7 @@ from model.data import SQuAD
 from torchtext.data.metrics import bleu_score
 from tqdm import tqdm
 import time
+import numpy as np
 
 from transformers import AlbertModel, AlbertTokenizer
 
@@ -119,7 +120,7 @@ def train(args, data):
 #            if p.requires_grad: ema.update_parameter(name, p)
 #        
         if (i + 1) % args.print_freq == 0:
-            dev_loss = test(args, model, data)#, ema
+            dev_loss = test(args, model, bert_model, data)#, ema
             best_dev_loss = min(dev_loss, best_dev_loss)
             
             best_train_loss = min(batch_loss, best_train_loss)
@@ -129,6 +130,10 @@ def train(args, data):
             print('Time: {}m {}s'.format(epoch_mins, epoch_secs))
             print('train loss: {} | dev loss: {}'.format(batch_loss, dev_loss))
             
+            ques, att = generate_question_bert_enc(batch.answer[0], batch.context[0], bert_model, model, args.device)
+            print('sample question: '.format(' '.join(ques)))
+            print('real question: '.format(batch.question[0]))
+            
             c = (i + 1) // args.print_freq
 
             writer.add_scalar('loss/train', batch_loss, c)
@@ -136,27 +141,28 @@ def train(args, data):
             
             if (i + 1) % args.save_freq == 0 and dev_loss <= best_dev_loss:
                 print('saving model(dev)')
+                torch.save(bert_model.state_dict(), 'saved_bert_models/BASE_{}_{}.pt'.format(args.encoder_type, args.model_time))
                 torch.save(model.state_dict(), 'saved_models/BASE_{}_{}.pt'.format(args.encoder_type, args.model_time))
             
             if (i + 1) % args.save_freq == 0 and batch_loss <= best_train_loss:
                 print('saving model(train)')
+                torch.save(bert_model.state_dict(), 'saved_bert_models/BASE_Train_{}_{}.pt'.format(args.encoder_type, args.model_time))
                 torch.save(model.state_dict(), 'saved_models/BASE_Train_{}_{}.pt'.format(args.encoder_type, args.model_time))
      
     return model
 
-def test(args, model, data):#, ema
+def test(args, model, bert_model, data):#, ema
     criterion = nn.CrossEntropyLoss(ignore_index = args.pad_idx_decoder)
     loss = 0
     
     model.eval()
-    
+    bert_model.eval()
 #    backup_params = EMA(0)
 #    for name, param in model.named_parameters():
 #        if param.requires_grad:
 #            backup_params.register(name, param.data)
 #            param.data.copy_(ema.get(name))
-    if args.encoder_type == 'bert':
-        bert_model = AlbertModel.from_pretrained('albert-base-v2').to(args.device)
+
 #        tokenizer = AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True, padding_side='left')
 #        decoder_tokenizer = AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True, padding_side='right')
     print('testing')
@@ -308,6 +314,51 @@ def generate_question(args, c_word, c_char, a_word, a_char, model, data):
             break
     return word, attention
 
+def generate_question_bert_enc(args, answer, context, bert_model, model, device, max_len_question=30, max_len_char = 30):
+    '''
+    answer: untokenized string
+    context: untokenized string
+    '''
+    bert_model.eval()
+    model.eval()
+    test_pair_in = args.tokenizer.encode_plus(answer, context, add_special_tokens=True, pad_to_max_length=True, return_tensors="pt")
+
+    with torch.no_grad():
+        input_ids_tensor = test_pair_in['input_ids'].to(device)
+        attention_mask_tensor = test_pair_in['attention_mask'].to(device)
+        token_type_ids_tensor = test_pair_in['token_type_ids'].to(device)
+        outputs = bert_model(input_ids_tensor, attention_mask_tensor, token_type_ids_tensor)
+        encoded = outputs[0]
+        
+        question_input_ids = torch.from_numpy(np.zeros([1, 35])).type(torch.LongTensor).to(device)
+        question_token_type_ids = torch.from_numpy(np.zeros([1, 35])).type(torch.LongTensor).to(device)
+        question_attention_mask = torch.from_numpy(np.zeros([1, 35])).type(torch.LongTensor).to(device)
+        
+        question_input_ids[0][0] = args.decoder_tokenizer.cls_token_id
+        question_attention_mask[0][0] = 1
+        
+        cmask = token_type_ids_tensor.unsqueeze(1).unsqueeze(2)
+        attentions = []
+        
+        for i in range(max_len_question+2):
+            
+            Q_emb = bert_model(input_ids=question_input_ids, attention_mask=question_attention_mask, token_type_ids=question_token_type_ids)[0]
+        
+            word_mask = model.make_dec_mask(question_input_ids)
+
+            output, attention = model.decoder(Q_emb, encoded, word_mask, cmask)
+            attentions.append(attention)
+            
+            pred_token = output.argmax(2)[:,-1].item()
+            
+            question_input_ids[0][i+1] = pred_token
+            question_attention_mask[0][i+1] = 1
+            
+            if pred_token == args.decoder_tokenizer.sep_token_id: break
+        
+        qus = args.decoder_tokenizer.convert_ids_to_tokens(question_input_ids[0])
+        return qus, attentions
+
 class EMA(object):
     def __init__(self, decay):
         self.decay = decay
@@ -364,7 +415,7 @@ def main():
     parser.add_argument('--CLIP', default=1, type=int)
     
     parser.add_argument('--print-freq', default=250, type=int)
-    parser.add_argument('--save-freq', default=500, type=int)
+    parser.add_argument('--save-freq', default=250, type=int)
     parser.add_argument('--epoch', default=20, type=int)
 #    parser.add_argument('--decaying-rate', default=0.98, type=int)
     
