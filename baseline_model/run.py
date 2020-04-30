@@ -350,7 +350,7 @@ def generate_question_bert_enc(args, answer, context, bert_model, model, max_len
             output, attention = model.decoder(Q_emb, encoded, word_mask, cmask)
             attentions.append(attention)
             
-            pred_token = output.argmax(2)[:,-1].item()
+            pred_token = output.argmax(2)[:,i].item()
             
             question_input_ids[0][i+1] = pred_token
             question_attention_mask[0][i+1] = 1
@@ -417,7 +417,7 @@ def main():
     
     parser.add_argument('--print-freq', default=128, type=int)
     parser.add_argument('--save-freq', default=128, type=int)
-    parser.add_argument('--epoch', default=40, type=int)
+    parser.add_argument('--epoch', default=25, type=int)
 #    parser.add_argument('--decaying-rate', default=0.98, type=int)
     
     parser.add_argument('--encoder-type', default='bert')
