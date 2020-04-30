@@ -51,6 +51,10 @@ def train(args, data):
     bert_model.eval()
     print('training')
     for i, batch in enumerate(data.train_iter):
+        print('calculating bleu score')
+        bleu_score = calculate_bleu_bert(args, data, bert_model, model)
+        print(bleu_score)
+        break
         start_time = time.time()
         
         present_epoch = int(data.train_iter.epoch)
@@ -248,7 +252,32 @@ def calculate_bleu(data, model, device, max_len = 30):
         labels.append(datum.q_word)
     
     return bleu_score(preds, labels)
-                
+
+def calculate_bleu_bert(args, data, bert_model, model):
+    labels = []
+    preds = []
+    
+    i = 0
+    print('calculating bleu score')
+    for example in tqdm(data.examples):
+        i += 1
+        if i == 10: break
+        answer = example.answer
+        context = example.context
+        question = example.question
+        ques_token = args.decoder_tokenizer.encode_plus(question, add_special_tokens=False, pad_to_max_length=False, return_tensors="pt")
+        ques_token = args.decoder_tokenizer.convert_ids_to_tokens(ques_token['input_ids'][0])
+        
+        try:
+            pred, _ = generate_question_bert_enc(args, answer, context, bert_model, model)
+        except:
+            continue
+        
+        preds.append(pred)
+        labels.append(ques_token)
+    
+    return bleu_score(preds, labels)
+               
 def generate_question(args, c_word, c_char, a_word, a_char, model, data):
     '''
     c_word: list: tokenized context (for example: form data.examples[0].c_word)
