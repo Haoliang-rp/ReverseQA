@@ -50,7 +50,7 @@ def train(args, data):
     model.train()
     bert_model.eval()
     print('training')
-    for i, batch in enumerate(data.train_iter):
+    for i, batch in enumerate(tqdm(data.train_iter)):
         start_time = time.time()
         
         present_epoch = int(data.train_iter.epoch)
