@@ -255,9 +255,12 @@ def calculate_bleu(data, model, device, max_len = 30):
 def calculate_bleu_bert(args, data, bert_model, model):
     labels = []
     preds = []
-
-    print('calculating bleu score')
+    
+    num = 0
+    print('calculating bleu score for 200 questions')
     for example in tqdm(data.examples):
+        num += 1
+        if num > 200: break
         answer = example.answer
         context = example.context
         question = example.question
