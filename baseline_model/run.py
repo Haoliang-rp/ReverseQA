@@ -51,10 +51,6 @@ def train(args, data):
     bert_model.eval()
     print('training')
     for i, batch in enumerate(data.train_iter):
-        print('calculating bleu score')
-        bleu_score = calculate_bleu_bert(args, data.train, bert_model, model)
-        print(bleu_score)
-        break
         start_time = time.time()
         
         present_epoch = int(data.train_iter.epoch)
@@ -63,6 +59,9 @@ def train(args, data):
 #        
         if present_epoch > last_epoch:
             print('epoch:', present_epoch + 1)
+            if last_epoch != 0:
+                bleu_score = calculate_bleu_bert(args, data.train, bert_model, model)
+                print('bleu score after {} epoch is {}'. format(last_epoch, bleu_score))
         last_epoch = present_epoch
         
         if args.encoder_type == 'bert':
@@ -256,12 +255,9 @@ def calculate_bleu(data, model, device, max_len = 30):
 def calculate_bleu_bert(args, data, bert_model, model):
     labels = []
     preds = []
-    
-    i = 0
+
     print('calculating bleu score')
     for example in tqdm(data.examples):
-        i += 1
-        if i == 10: break
         answer = example.answer
         context = example.context
         question = example.question
