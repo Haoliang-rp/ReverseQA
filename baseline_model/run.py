@@ -52,7 +52,7 @@ def train(args, data):
     print('training')
     for i, batch in enumerate(data.train_iter):
         print('calculating bleu score')
-        bleu_score = calculate_bleu_bert(args, data, bert_model, model)
+        bleu_score = calculate_bleu_bert(args, data.train, bert_model, model)
         print(bleu_score)
         break
         start_time = time.time()
