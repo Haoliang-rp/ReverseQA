@@ -39,7 +39,7 @@ def train(args, data):
     
     loss, last_epoch = 0, -1
     best_dev_loss = 20000
-    best_train_loss = 200
+    best_train_loss = 20000
 
     #scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda epoch: (1 - epoch / args.epoch)**args.decaying_rate)
 #    scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=args.exp_decay_rate)
@@ -414,9 +414,9 @@ def main():
     parser.add_argument('--kernel-size', default=5, type=int)
     parser.add_argument('--CLIP', default=1, type=int)
     
-    parser.add_argument('--print-freq', default=250, type=int)
-    parser.add_argument('--save-freq', default=250, type=int)
-    parser.add_argument('--epoch', default=20, type=int)
+    parser.add_argument('--print-freq', default=128, type=int)
+    parser.add_argument('--save-freq', default=128, type=int)
+    parser.add_argument('--epoch', default=40, type=int)
 #    parser.add_argument('--decaying-rate', default=0.98, type=int)
     
     parser.add_argument('--encoder-type', default='bert')
