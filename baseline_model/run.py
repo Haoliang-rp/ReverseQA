@@ -358,7 +358,7 @@ def generate_question_bert_enc(args, answer, context, bert_model, model, max_len
             if pred_token == args.decoder_tokenizer.sep_token_id: break
         
         qus = args.decoder_tokenizer.convert_ids_to_tokens(question_input_ids[0])
-        return qus, attentions
+        return qus[1:i], attentions
 
 class EMA(object):
     def __init__(self, decay):
@@ -389,9 +389,9 @@ def main():
     parser.add_argument('--char-channel-width', default=3, type=int)
     parser.add_argument('--char-channel-size', default=100, type=int)
     
-    parser.add_argument('--dev-batch-size', default=50, type=int)
+    parser.add_argument('--dev-batch-size', default=100, type=int)
     parser.add_argument('--dev-file', default='dev-v2.0.json')
-    parser.add_argument('--train-batch-size', default=30, type=int)
+    parser.add_argument('--train-batch-size', default=60, type=int)
     parser.add_argument('--train-file', default='train-v2.0.json')
     
     parser.add_argument('--dropout', default=0.2, type=float)
