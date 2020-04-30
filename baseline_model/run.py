@@ -131,8 +131,8 @@ def train(args, data):
             print('train loss: {} | dev loss: {}'.format(batch_loss, dev_loss))
             
             ques, att = generate_question_bert_enc(args, batch.answer[0], batch.context[0], bert_model, model)
-            print('sample question: '.format(' '.join(ques)))
-            print('real question: '.format(batch.question[0]))
+            print('sample question: {}'.format(' '.join(ques)))
+            print('real question: {}'.format(batch.question[0]))
             
             c = (i + 1) // args.print_freq
 
