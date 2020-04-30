@@ -130,7 +130,7 @@ def train(args, data):
             print('Time: {}m {}s'.format(epoch_mins, epoch_secs))
             print('train loss: {} | dev loss: {}'.format(batch_loss, dev_loss))
             
-            ques, att = generate_question_bert_enc(batch.answer[0], batch.context[0], bert_model, model, args.device)
+            ques, att = generate_question_bert_enc(args, batch.answer[0], batch.context[0], bert_model, model)
             print('sample question: '.format(' '.join(ques)))
             print('real question: '.format(batch.question[0]))
             
@@ -314,11 +314,12 @@ def generate_question(args, c_word, c_char, a_word, a_char, model, data):
             break
     return word, attention
 
-def generate_question_bert_enc(args, answer, context, bert_model, model, device, max_len_question=30, max_len_char = 30):
+def generate_question_bert_enc(args, answer, context, bert_model, model, max_len_question=30):
     '''
     answer: untokenized string
     context: untokenized string
     '''
+    device = args.device
     bert_model.eval()
     model.eval()
     test_pair_in = args.tokenizer.encode_plus(answer, context, add_special_tokens=True, pad_to_max_length=True, return_tensors="pt")
