@@ -21,7 +21,7 @@ def train(args, data):
     if args.encoder_type == 'bert':
         
         bert_model = BertModel.from_pretrained('bert-base-uncased') # AlbertModel.from_pretrained('albert-base-v2').to(args.device)
-        model = Baseline_Bert(args).to(args.device, bert_model)
+        model = Baseline_Bert(args, bert_model).to(args.device)
 #        tokenizer = AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True, padding_side='left')
 #        decoder_tokenizer = AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True, padding_side='right')
 #        setattr(args, 'pad_idx_decoder', args.decoder_tokenizer.pad_token_id)
