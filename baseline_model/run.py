@@ -45,11 +45,7 @@ def train(args, data):
     if args.encoder_type == 'bert': bert_model.eval()
     
     print('training')
-    for i, batch in enumerate(tqdm(data.train_iter)):
-        ques, att = generate_question_bert_enc(args, batch.answer[0], batch.context[0], bert_model, model)
-        print('sample question: {}'.format(' '.join(ques)))
-        print('real question: {}'.format(batch.question[0]))
-                
+    for i, batch in enumerate(tqdm(data.train_iter)):                
         start_time = time.time()
         
         present_epoch = int(data.train_iter.epoch)
