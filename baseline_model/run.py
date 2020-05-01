@@ -430,9 +430,9 @@ def main():
     parser.add_argument('--exp-decay-rate', default=0.999, type=float)
     
     parser.add_argument('--word-dim', default=100, type=int)
-    parser.add_argument('--n-head', default=4, type=int)
+    parser.add_argument('--n-head', default=8, type=int)
     
-    parser.add_argument('--DEC-LAYERS', default=3, type=int)
+    parser.add_argument('--DEC-LAYERS', default=4, type=int)
     parser.add_argument('--DEC-HEADS', default=4, type=int)
 
     parser.add_argument('--max-len-context', default=300, type=int)
@@ -448,7 +448,7 @@ def main():
     parser.add_argument('--epoch', default=25, type=int)
 #    parser.add_argument('--decaying-rate', default=0.98, type=int)
     
-    parser.add_argument('--encoder-type', default='bert')
+    parser.add_argument('--encoder-type', default='non-bert')
     
     args = parser.parse_args()
     setattr(args, 'device', torch.device("cuda:{}".format(args.gpu) if torch.cuda.is_available() else "cpu"))#
@@ -462,7 +462,7 @@ def main():
         setattr(args, 'pad_idx_decoder', args.decoder_tokenizer.pad_token_id)
         setattr(args, 'output_dim', args.tokenizer.vocab_size)
     else:
-        setattr(args, 'd_model', default=96)
+        setattr(args, 'd_model', default=768 // args.n_head) # 96
         setattr(args, 'char_vocab_size', len(data.CHAR.vocab))
         setattr(args, 'word_vocab_size', len(data.WORD.vocab))
         setattr(args, 'pad_idx_encoder', data.WORD.vocab.stoi[data.WORD.pad_token])
