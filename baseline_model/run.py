@@ -439,7 +439,6 @@ def main():
     
     parser.add_argument('--dropout', default=0.2, type=float)
     parser.add_argument('--gpu', default=0, type=int)
-    parser.add_argument('--hidden-size', default=100, type=int)
     
     parser.add_argument('--learning-rate', default=0.0005, type=float)
     parser.add_argument('--exp-decay-rate', default=0.999, type=float)
@@ -484,6 +483,7 @@ def main():
         setattr(args, 'pad_idx_encoder', data.WORD.vocab.stoi[data.WORD.pad_token])
         setattr(args, 'pad_idx_decoder', data.WORD_DECODER.vocab.stoi[data.WORD_DECODER.pad_token])
         setattr(args, 'output_dim', len(data.WORD_DECODER.vocab))
+        setattr(args, 'hidden_size', 100)
 #        setattr(args, 'dataset_file', '.data/squad/{}'.format(args.dev_file))
         
     setattr(args, 'prediction_file', 'prediction{}.out'.format(args.gpu))
