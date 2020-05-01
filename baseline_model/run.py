@@ -20,7 +20,7 @@ from transformers import BertModel, BertTokenizer
 def train(args, data):
     if args.encoder_type == 'bert':
         
-        bert_model = BertModel.from_pretrained('bert-base-uncased') # AlbertModel.from_pretrained('albert-base-v2').to(args.device)
+        bert_model = BertModel.from_pretrained('bert-base-uncased').to(args.device) # AlbertModel.from_pretrained('albert-base-v2').to(args.device)
         model = Baseline_Bert(args, bert_model).to(args.device)
 #        tokenizer = AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True, padding_side='left')
 #        decoder_tokenizer = AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True, padding_side='right')
