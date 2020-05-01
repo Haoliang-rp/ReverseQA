@@ -25,10 +25,6 @@ class Linear(nn.Module):
 class Embedding(nn.Module):
     def __init__(self, args, pretrained):
         super().__init__()
-        # char_emb
-        # char_dim = 8, char_channel_width = 5
-        # char_channel_size = 100
-        # result: for each channel, we have 22 element -----> needs to be max-ppoled
         self.args = args
         self.char_emb = nn.Embedding(args.char_vocab_size, args.char_dim, padding_idx=1)
         nn.init.uniform_(self.char_emb.weight, -0.001, 0.001)
@@ -149,53 +145,6 @@ class MultiHeadAttention(nn.Module):
         x = self.fc(x)
 
         return x, attention
-# =============================================================================
-# class SelfAttention(nn.Module):
-#     def __init__(self):
-#         super().__init__()
-#         #self.n_head = 4
-#         #self.kqv_dim = 96
-#         #self.hidden_size = 100
-# 
-#         self.Wqs = [nn.Linear(2 * args.hidden_size, args.kqv_dim) for _ in range(args.n_head)]
-#         self.Wks = [nn.Linear(2 * args.hidden_size, args.kqv_dim) for _ in range(args.n_head)]
-#         self.Wvs = [nn.Linear(2 * args.hidden_size, args.kqv_dim) for _ in range(args.n_head)]
-#         
-#         
-#         for i in range(args.n_head):
-#             nn.init.xavier_uniform_(self.Wqs[i].weight)
-#             nn.init.xavier_uniform_(self.Wks[i].weight)
-#             nn.init.xavier_uniform_(self.Wvs[i].weight)
-# 
-#         self.attention_head_projection = nn.Linear(args.kqv_dim * args.n_head, 2 * args.hidden_size)
-#         nn.init.kaiming_uniform_(self.attention_head_projection.weight)
-#         
-#         self.norm_mh = nn.LayerNorm(2 * args.hidden_size)
-#         
-#     def forward(self, x):
-#         print(x.size())
-#         WQs, WKs, WVs = [], [], []
-#         
-#         for i in range(args.n_head):
-# 
-#             WQs.append(self.Wqs[i](x))
-#             WKs.append(self.Wks[i](x))
-#             WVs.append(self.Wvs[i](x))
-#         
-#         heads = []
-#         for i in range(args.n_head):
-#             out = torch.bmm(WQs[i], WKs[i].transpose(1, 2))
-#             out = torch.mul(out, 1 / math.sqrt(args.kqv_dim))
-#             out = F.softmax(out, dim=2)
-#             head_i = torch.bmm(out, WVs[i])
-#             heads.append(head_i)
-#         head = torch.cat(heads, dim=2)
-# 
-#         out = self.attention_head_projection(head)
-#         out = self.norm_mh(torch.add(out, x))
-#         
-#         return out
-# =============================================================================
 
 
 class CQAttention(nn.Module):
@@ -448,46 +397,13 @@ class Baseline(nn.Module):
         
         return output, attention
 
-
-#class Decoder_Bert(nn.Module):
-#    def __init__(self, output_dim, n_layers, hidden_size, d_model, n_head, dropout, max_length, device):
-#        super().__init__()
-#        self.hidden_size = hidden_size
-#        self.dropout = dropout
-#        self.max_length = max_length
-#        self.device = device
-#        
-#        self.pos_embedding = nn.Embedding(self.max_length, hidden_size*2)
-#        
-#        self.fc = nn.Linear(hidden_size*2, d_model*n_head, bias=True)
-#        
-#        self.layers = nn.ModuleList([DecoderLayer(d_model, 
-#                                                  n_head,  
-#                                                  dropout,
-#                                                 device)
-#                                     for _ in range(n_layers)])
-#        
-#        self.dropout = nn.Dropout(dropout)
-#        
-#        self.fc_out = nn.Linear(d_model*4, output_dim)
-#    
-#    def forward(self, question_emb, enc_emb, question_mask, enc_mask):
-#        # question: batch_size, question_len x hidden_size*2
-#        
-#        for layer in self.layers:
-#            ques_emb, attention = layer(question_emb, enc_emb, question_mask, enc_mask) 
-#        
-#        output = self.fc_out(ques_emb)
-#        
-#        return output, attention
-
 class Baseline_Bert(nn.Module):
     def __init__(self, args, bert_model):
         super().__init__()
         self.args = args
         self.device = args.device
         # decoder
-        self.decoder = Decoder(args.output_dim, n_layers=args.DEC_LAYERS, hidden_size=args.hidden_size, d_model=args.d_model, n_head=args.n_head, dropout=args.dropout, max_length=args.max_len_question+2, device=self.device).to(self.device)
+        self.decoder = Decoder(args.output_dim, n_layers=args.DEC_LAYERS, hidden_size=args.hidden_size, d_model=args.d_model, n_head=args.n_head, dropout=args.dropout, max_length=args.max_len_question+10, device=self.device).to(self.device)
         self.emb = bert_model.get_input_embeddings().to(self.device)
         
     def make_dec_mask(self, trg):
@@ -506,8 +422,6 @@ class Baseline_Bert(nn.Module):
 
     def forward(self, encoded, question_input_ids, cmask):
         question_word = question_input_ids[:,:-1]
-        # question_word = batch.q_word_decoder[0][:,:-1]
-        # question_char = batch.q_char_decoder[:,:-1]
         trg_mask = self.make_dec_mask(question_word).to(self.device)
         Q_emb = self.emb(question_word)
         output, attention = self.decoder(Q_emb, encoded, trg_mask, cmask)

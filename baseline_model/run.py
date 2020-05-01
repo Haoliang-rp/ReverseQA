@@ -19,13 +19,8 @@ from transformers import BertModel, BertTokenizer
 
 def train(args, data):
     if args.encoder_type == 'bert':
-        
         bert_model = BertModel.from_pretrained('bert-base-uncased').to(args.device) # AlbertModel.from_pretrained('albert-base-v2').to(args.device)
         model = Baseline_Bert(args, bert_model).to(args.device)
-#        tokenizer = AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True, padding_side='left')
-#        decoder_tokenizer = AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True, padding_side='right')
-#        setattr(args, 'pad_idx_decoder', args.decoder_tokenizer.pad_token_id)
-#        setattr(args, 'output_dim', args.tokenizer.vocab_size)
     else:
         model = Baseline(args, data.WORD.vocab.vectors).to(args.device)
     
@@ -35,8 +30,6 @@ def train(args, data):
     optimizer = torch.optim.AdamW(model.parameters(), lr = args.learning_rate)
 
     writer = SummaryWriter(log_dir='runs/' + args.model_time)
-    
-    
     
     loss, last_epoch = 0, -1
     best_dev_loss = 20000
@@ -84,19 +77,11 @@ def train(args, data):
                 outputs = bert_model(input_ids_tensor, attention_mask_tensor, token_type_ids_tensor)
                 encoded = outputs[0]
                 
-                question_input_ids = question_batch_in['input_ids'].to(args.device)
-#                q_input_ids_tensor = question_batch_in['input_ids'][:,:-1].to(args.device)
-#                q_attention_mask_tensor = question_batch_in['attention_mask'][:,:-1].to(args.device)
-#                q_token_type_ids_tensor = question_batch_in['token_type_ids'][:,:-1].to(args.device)
-                
-#                Q_emb = bert_model(q_input_ids_tensor, q_attention_mask_tensor, q_token_type_ids_tensor)[0]
-                
+                question_input_ids = question_batch_in['input_ids'].to(args.device)                
                 
             cmask = token_type_ids_tensor.unsqueeze(1).unsqueeze(2)#.unsqueeze(2).repeat(1, 1, 768)
             X, _ = model(encoded, question_input_ids, cmask)
             
-#            question_word = question_batch_in['input_ids'][:,:-1]
-#            X, _ = model(encoded, question_word, Q_emb, cmask)
             output_dim = X.shape[-1]
             X = X.contiguous().view(-1, output_dim)
             
@@ -147,7 +132,7 @@ def train(args, data):
                 print('sample question: {}'.format(' '.join(ques)))
                 print('real question: {}'.format(batch.question[0]))
             else:
-                c_word, c_char, a_word, a_char = data.examples[0].c_word, data.examples[0].c_char, data.examples[0].a_word, data.examples[0].a_char, 
+                c_word, c_char, a_word, a_char = data.examples[0].c_word, data.examples[0].c_char, data.examples[0].a_word, data.examples[0].a_char
                 ques, att = generate_question(args, c_word, c_char, a_word, a_char, model, data)
                 print('sample question: {}'.format(' '.join(ques)))
                 print('real question: {}'.format(batch.question[0]))
@@ -427,6 +412,9 @@ class EMA(object):
 
 def main():
     parser = argparse.ArgumentParser()
+    
+    parser.add_argument('--encoder-type', default='bert')
+    
     parser.add_argument('--char-dim', default=8, type=int)
     parser.add_argument('--char-channel-width', default=3, type=int)
     parser.add_argument('--char-channel-size', default=100, type=int)
@@ -461,10 +449,8 @@ def main():
     parser.add_argument('--epoch', default=25, type=int)
 #    parser.add_argument('--decaying-rate', default=0.98, type=int)
     
-    parser.add_argument('--encoder-type', default='bert')
-    
     args = parser.parse_args()
-    setattr(args, 'device', 'cpu')#torch.device("cuda:{}".format(args.gpu) if torch.cuda.is_available() else "cpu")
+    setattr(args, 'device', torch.device("cuda:{}".format(args.gpu) if torch.cuda.is_available() else "cpu"))#'cpu'
     print('loading SQuAD data...')
     
     data = SQuAD(args)
