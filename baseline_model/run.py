@@ -53,7 +53,7 @@ def train(args, data):
 #        
         if present_epoch > last_epoch:
             print('epoch:', present_epoch + 1)
-            if args.encoder_type == 'bert':
+            if args.encoder_type == 'bert' :#and present_epoch > 0
                 bleu_score = calculate_bleu_bert(args, data.dev, bert_model, model)
                 print('bleu score after {} epoch is {}'. format(last_epoch, bleu_score))
         last_epoch = present_epoch
@@ -61,8 +61,6 @@ def train(args, data):
         optimizer.zero_grad()
         
         if args.encoder_type == 'bert':
-                
-            print('here')
             training_batch = list(zip(batch.answer, batch.context))
             training_batch_in = args.tokenizer.batch_encode_plus(training_batch, add_special_tokens=True, pad_to_max_length=True, return_tensors="pt")
             
@@ -255,7 +253,7 @@ def calculate_bleu_bert(args, data, bert_model, model):
 
     print('calculating bleu score for 500 questions')
 
-    for i in range(10):
+    for i in tqdm(range(10)):
         example = data.examples[i]
         answer = example.answer
         context = example.context
