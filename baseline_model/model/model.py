@@ -317,6 +317,7 @@ class Decoder(nn.Module):
         question_len = question_emb.size(1)
         
         pos = torch.arange(0, question_len).unsqueeze(0).repeat(batch_size, 1).to(self.device)
+        print('question len:', question_len)
         pos_emb = self.pos_embedding(pos)
         ques_emb = question_emb + pos_emb
         
