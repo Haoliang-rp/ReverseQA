@@ -382,14 +382,13 @@ def generate_question_bert_enc(args, answer, context, bert_model, model, max_len
             attentions.append(attention)
             
             pred_token = output.argmax(2)[:,-1].item()
-            
+            word_idxes.append(pred_token)
 #            question_input_ids[0][i+1] = pred_token
 #            question_attention_mask[0][i+1] = 1
             
             if pred_token == args.decoder_tokenizer.sep_token_id: break
         
         qus = args.decoder_tokenizer.convert_ids_to_tokens(word_idxes)
-        print(qus)
         return qus[1:i+1], attentions
 
 class EMA(object):
