@@ -469,7 +469,7 @@ def main():
         setattr(args, 'pad_idx_decoder', args.decoder_tokenizer.pad_token_id)
         setattr(args, 'output_dim', args.tokenizer.vocab_size)
     else:
-        setattr(args, 'd_model', default=768 // args.n_head) # 96
+        setattr(args, 'd_model', 768 // args.n_head) # 96
         setattr(args, 'char_vocab_size', len(data.CHAR.vocab))
         setattr(args, 'word_vocab_size', len(data.WORD.vocab))
         setattr(args, 'pad_idx_encoder', data.WORD.vocab.stoi[data.WORD.pad_token])
