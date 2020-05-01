@@ -53,14 +53,14 @@ def train(args, data):
 #        
         if present_epoch > last_epoch:
             print('epoch:', present_epoch + 1)
+            if args.encoder_type == 'bert':
+                bleu_score = calculate_bleu_bert(args, data.dev, bert_model, model)
+                print('bleu score after {} epoch is {}'. format(last_epoch, bleu_score))
         last_epoch = present_epoch
         
         optimizer.zero_grad()
         
         if args.encoder_type == 'bert':
-            if last_epoch > -100:
-                bleu_score = calculate_bleu_bert(args, data.dev, bert_model, model)
-                print('bleu score after {} epoch is {}'. format(last_epoch, bleu_score))
                 
             print('here')
             training_batch = list(zip(batch.answer, batch.context))
