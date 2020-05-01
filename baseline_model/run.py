@@ -475,7 +475,7 @@ def main():
         setattr(args, 'decoder_tokenizer', BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True, padding_side='right'))
         setattr(args, 'pad_idx_decoder', args.decoder_tokenizer.pad_token_id)
         setattr(args, 'output_dim', args.tokenizer.vocab_size)
-        setattr(args, 'hidden_size', 64) # bert have size 128 for embedding
+        setattr(args, 'hidden_size', 768 // 2) # bert have size 128 for embedding
     else:
         setattr(args, 'd_model', 768 // args.n_head) # 96
         setattr(args, 'char_vocab_size', len(data.CHAR.vocab))
