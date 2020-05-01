@@ -126,7 +126,10 @@ def train(args, data):
 #            if p.requires_grad: ema.update_parameter(name, p)
 #        
         if (i + 1) % args.print_freq == 0:
-            dev_loss = test(args, model, bert_model, data)#, ema
+            if args.encoder_type == 'bert':
+                dev_loss = test(args, model, data, bert_model)#, ema
+            else:
+                dev_loss = test(args, model, data)
             best_dev_loss = min(dev_loss, best_dev_loss)
             
             best_train_loss = min(batch_loss, best_train_loss)
@@ -163,12 +166,12 @@ def train(args, data):
      
     return model
 
-def test(args, model, bert_model, data):#, ema
+def test(args, model, data, bert_model=None):#, ema
     criterion = nn.CrossEntropyLoss(ignore_index = args.pad_idx_decoder)
     loss = 0
     
     model.eval()
-    bert_model.eval()
+    if bert_model: bert_model.eval()
 #    backup_params = EMA(0)
 #    for name, param in model.named_parameters():
 #        if param.requires_grad:
@@ -211,7 +214,6 @@ def test(args, model, bert_model, data):#, ema
                 label = question_batch_in['input_ids'][:,1:].contiguous().view(-1).to(args.device)
                 
             else:
-                label = question_batch_in['input_ids'][:,1:].contiguous().view(-1).to(args.device)
                 context_word, context_char = batch.c_word[0], batch.c_char
                 answer_word, answer_char = batch.a_word[0], batch.a_char
                 question_word, question_char = batch.q_word_decoder[0][:,:-1], batch.q_char_decoder[:,:-1]
