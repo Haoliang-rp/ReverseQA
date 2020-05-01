@@ -13,7 +13,6 @@ from model.data import SQuAD
 from torchtext.data.metrics import bleu_score
 from tqdm import tqdm
 import time
-import numpy as np
 
 from transformers import BertModel, BertTokenizer
 
@@ -78,7 +77,7 @@ def train(args, data):
                 encoded = outputs[0]
                 
                 question_input_ids = question_batch_in['input_ids'].to(args.device)                
-                
+                if question_input_ids.size(1) > args.max_len_question + 9: continue
             cmask = token_type_ids_tensor.unsqueeze(1).unsqueeze(2)#.unsqueeze(2).repeat(1, 1, 768)
             X, _ = model(encoded, question_input_ids, cmask)
             
