@@ -59,12 +59,13 @@ def train(args, data):
 #        
         if present_epoch > last_epoch:
             print('epoch:', present_epoch + 1)
-            if last_epoch > 0:
-                bleu_score = calculate_bleu_bert(args, data.dev, bert_model, model)
-                print('bleu score after {} epoch is {}'. format(last_epoch, bleu_score))
         last_epoch = present_epoch
         
         if args.encoder_type == 'bert':
+            if last_epoch > 0:
+                bleu_score = calculate_bleu_bert(args, data.dev, bert_model, model)
+                print('bleu score after {} epoch is {}'. format(last_epoch, bleu_score))
+                
             training_batch = list(zip(batch.answer, batch.context))
             training_batch_in = args.tokenizer.batch_encode_plus(training_batch, add_special_tokens=True, pad_to_max_length=True, return_tensors="pt")
             
@@ -133,9 +134,15 @@ def train(args, data):
             print('Time: {}m {}s'.format(epoch_mins, epoch_secs))
             print('train loss: {} | dev loss: {}'.format(batch_loss, dev_loss))
             
-            ques, att = generate_question_bert_enc(args, batch.answer[0], batch.context[0], bert_model, model)
-            print('sample question: {}'.format(' '.join(ques)))
-            print('real question: {}'.format(batch.question[0]))
+            if args.encoder_type == 'bert':
+                ques, att = generate_question_bert_enc(args, batch.answer[0], batch.context[0], bert_model, model)
+                print('sample question: {}'.format(' '.join(ques)))
+                print('real question: {}'.format(batch.question[0]))
+            else:
+                c_word, c_char, a_word, a_char = data.examples[0].c_word, data.examples[0].c_char, data.examples[0].a_word, data.examples[0].a_char, 
+                ques, att = generate_question(args, c_word, c_char, a_word, a_char, model, data)
+                print('sample question: {}'.format(' '.join(ques)))
+                print('real question: {}'.format(batch.question[0]))
             
             c = (i + 1) // args.print_freq
 
