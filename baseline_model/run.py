@@ -53,7 +53,7 @@ def train(args, data):
 #        
         if present_epoch > last_epoch:
             print('epoch:', present_epoch + 1)
-            if args.encoder_type == 'bert' :#and present_epoch > 0
+            if args.encoder_type == 'bert' and present_epoch > 0:#
                 bleu_score = calculate_bleu_bert(args, data.dev, bert_model, model)
                 print('bleu score after {} epoch is {}'. format(last_epoch, bleu_score))
         last_epoch = present_epoch
@@ -253,7 +253,7 @@ def calculate_bleu_bert(args, data, bert_model, model):
 
     print('calculating bleu score for 500 questions')
 
-    for i in tqdm(range(10)):
+    for i in tqdm(range(500)):
         example = data.examples[i]
         answer = example.answer
         context = example.context
