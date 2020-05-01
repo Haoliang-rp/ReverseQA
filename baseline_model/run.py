@@ -166,7 +166,10 @@ def test(args, model, data, bert_model=None):#, ema
 #        decoder_tokenizer = AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True, padding_side='right')
     print('testing')
     with torch.set_grad_enabled(False):
+        num = 0
         for batch in iter(tqdm(data.dev_iter)):
+            num += 1
+            if num > 20: break
             if args.encoder_type == 'bert':
                 training_batch = list(zip(batch.answer, batch.context))
                 training_batch_in = args.tokenizer.batch_encode_plus(training_batch, add_special_tokens=True, pad_to_max_length=True, return_tensors="pt")
@@ -215,7 +218,7 @@ def test(args, model, data, bert_model=None):#, ema
 #            if param.requires_grad:
 #                param.data.copy_(backup_params.get(name))
 
-    return loss / len(data.dev_iter)
+    return loss / n
 
 def epoch_time(start_time, end_time):
     elapsed_time = end_time - start_time
