@@ -34,7 +34,7 @@ def train(args, data):
     loss, last_epoch = 0, -1
     best_dev_loss = 20000
     best_train_loss = 20000
-
+    
     #scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda epoch: (1 - epoch / args.epoch)**args.decaying_rate)
 #    scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=args.exp_decay_rate)
 #    max_dev_exact, max_dev_f1 = -1, -1
@@ -46,6 +46,10 @@ def train(args, data):
     
     print('training')
     for i, batch in enumerate(tqdm(data.train_iter)):
+        ques, att = generate_question_bert_enc(args, batch.answer[0], batch.context[0], bert_model, model)
+        print('sample question: {}'.format(' '.join(ques)))
+        print('real question: {}'.format(batch.question[0]))
+                
         start_time = time.time()
         
         present_epoch = int(data.train_iter.epoch)
@@ -88,9 +92,7 @@ def train(args, data):
             # question_batch_in['input_ids']
             label = question_input_ids[:,1:].contiguous().view(-1).to(args.device)
         
-        else:
-            
-            
+        else:            
             context_word, context_char = batch.c_word[0], batch.c_char
             answer_word, answer_char = batch.a_word[0], batch.a_char
             question_word, question_char = batch.q_word_decoder[0][:,:-1], batch.q_char_decoder[:,:-1]
@@ -358,33 +360,35 @@ def generate_question_bert_enc(args, answer, context, bert_model, model, max_len
         outputs = bert_model(input_ids_tensor, attention_mask_tensor, token_type_ids_tensor)
         encoded = outputs[0]
         
-        question_input_ids = torch.from_numpy(np.zeros([1, 35])).type(torch.LongTensor).to(device)
-        question_token_type_ids = torch.from_numpy(np.zeros([1, 35])).type(torch.LongTensor).to(device)
-        question_attention_mask = torch.from_numpy(np.zeros([1, 35])).type(torch.LongTensor).to(device)
-        
-        question_input_ids[0][0] = args.decoder_tokenizer.cls_token_id
-        question_attention_mask[0][0] = 1
+#        question_input_ids = torch.from_numpy(np.zeros([1, 35])).type(torch.LongTensor).to(device)
+#        question_token_type_ids = torch.from_numpy(np.zeros([1, 35])).type(torch.LongTensor).to(device)
+#        question_attention_mask = torch.from_numpy(np.zeros([1, 35])).type(torch.LongTensor).to(device)
+#        
+#        question_input_ids[0][0] = args.decoder_tokenizer.cls_token_id
+#        question_attention_mask[0][0] = 1
         
         cmask = token_type_ids_tensor.unsqueeze(1).unsqueeze(2)
         attentions = []
         
+        word_idxes = [args.decoder_tokenizer.cls_token_id]
         for i in range(max_len_question+2):
+            word_tensor = torch.LongTensor(word_idxes).unsqueeze(0).to(device)
+            word_mask = model.make_dec_mask(word_tensor)
             
-            Q_emb = bert_model(input_ids=question_input_ids, attention_mask=question_attention_mask, token_type_ids=question_token_type_ids)[0]
-        
-            word_mask = model.make_dec_mask(question_input_ids)
-
-            output, attention = model.decoder(Q_emb, encoded, word_mask, cmask)
+            with torch.no_grad():
+                Q_emb = model.emb(word_tensor)
+                output, attention = model.decoder(Q_emb, encoded, word_mask, cmask)
+                
             attentions.append(attention)
             
             pred_token = output.argmax(2)[:,i].item()
             
-            question_input_ids[0][i+1] = pred_token
-            question_attention_mask[0][i+1] = 1
+#            question_input_ids[0][i+1] = pred_token
+#            question_attention_mask[0][i+1] = 1
             
             if pred_token == args.decoder_tokenizer.sep_token_id: break
         
-        qus = args.decoder_tokenizer.convert_ids_to_tokens(question_input_ids[0])
+        qus = args.decoder_tokenizer.convert_ids_to_tokens(word_idxes)
         return qus[1:i], attentions
 
 class EMA(object):
