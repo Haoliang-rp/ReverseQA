@@ -268,8 +268,6 @@ def calculate_bleu_bert(args, data, bert_model, model):
             #generate_question_bert_enc(args, answer, context, bert_model, model)
 #        except:
 #            continue
-        print(pred)
-        print(ques_token)
         preds.append(pred)
         labels.append(ques_token)
     
