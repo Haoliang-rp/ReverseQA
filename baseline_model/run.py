@@ -58,7 +58,7 @@ def train(args, data):
         optimizer.zero_grad()
         
         if args.encoder_type == 'bert':
-            if last_epoch > 0:
+            if last_epoch > -100:
                 bleu_score = calculate_bleu_bert(args, data.dev, bert_model, model)
                 print('bleu score after {} epoch is {}'. format(last_epoch, bleu_score))
                 
@@ -254,7 +254,7 @@ def calculate_bleu_bert(args, data, bert_model, model):
     
     num = 0
     print('calculating bleu score for 200 questions')
-    for example in tqdm(data.examples):
+    for example in data.examples:
         num += 1
         if num > 200: break
         answer = example.answer
@@ -263,10 +263,11 @@ def calculate_bleu_bert(args, data, bert_model, model):
         ques_token = args.decoder_tokenizer.encode_plus(question, add_special_tokens=False, pad_to_max_length=False, return_tensors="pt")
         ques_token = args.decoder_tokenizer.convert_ids_to_tokens(ques_token['input_ids'][0])
         
-        try:
-            pred, _ = generate_question_bert_enc(args, answer, context, bert_model, model)
-        except:
-            continue
+#        try:
+        pred, _ = generate_question_bert_enc(args, answer, context, bert_model, model)
+            #generate_question_bert_enc(args, answer, context, bert_model, model)
+#        except:
+#            continue
         
         preds.append(pred)
         labels.append(ques_token)
