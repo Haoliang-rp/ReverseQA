@@ -389,7 +389,8 @@ def generate_question_bert_enc(args, answer, context, bert_model, model, max_len
             if pred_token == args.decoder_tokenizer.sep_token_id: break
         
         qus = args.decoder_tokenizer.convert_ids_to_tokens(word_idxes)
-        return qus[1:i], attentions
+        print(qus)
+        return qus[1:i+1], attentions
 
 class EMA(object):
     def __init__(self, decay):
