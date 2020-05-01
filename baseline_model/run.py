@@ -381,7 +381,7 @@ def generate_question_bert_enc(args, answer, context, bert_model, model, max_len
                 
             attentions.append(attention)
             
-            pred_token = output.argmax(2)[:,i].item()
+            pred_token = output.argmax(2)[:,-1].item()
             
 #            question_input_ids[0][i+1] = pred_token
 #            question_attention_mask[0][i+1] = 1
