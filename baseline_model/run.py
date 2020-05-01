@@ -252,8 +252,11 @@ def calculate_bleu_bert(args, data, bert_model, model):
     labels = []
     preds = []
 
-    print('calculating bleu score')
+    print('calculating bleu score for 500 questions')
+    num = 0
     for example in tqdm(data.examples):
+        num += 1
+        if num > 500: return bleu_score(preds, labels)
         answer = example.answer
         context = example.context
         question = example.question
@@ -265,7 +268,8 @@ def calculate_bleu_bert(args, data, bert_model, model):
             #generate_question_bert_enc(args, answer, context, bert_model, model)
 #        except:
 #            continue
-        
+        print(pred)
+        print(ques_token)
         preds.append(pred)
         labels.append(ques_token)
     
