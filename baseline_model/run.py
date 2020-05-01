@@ -15,12 +15,13 @@ from tqdm import tqdm
 import time
 import numpy as np
 
-from transformers import AlbertModel, AlbertTokenizer
+from transformers import BertModel, BertTokenizer
 
 def train(args, data):
     if args.encoder_type == 'bert':
-        model = Baseline_Bert(args).to(args.device)
-        bert_model = AlbertModel.from_pretrained('albert-base-v2').to(args.device)
+        
+        bert_model = BertModel.from_pretrained('bert-base-uncased') # AlbertModel.from_pretrained('albert-base-v2').to(args.device)
+        model = Baseline_Bert(args).to(args.device, bert_model)
 #        tokenizer = AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True, padding_side='left')
 #        decoder_tokenizer = AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True, padding_side='right')
 #        setattr(args, 'pad_idx_decoder', args.decoder_tokenizer.pad_token_id)
@@ -82,22 +83,25 @@ def train(args, data):
                 outputs = bert_model(input_ids_tensor, attention_mask_tensor, token_type_ids_tensor)
                 encoded = outputs[0]
                 
-                q_input_ids_tensor = question_batch_in['input_ids'][:,:-1].to(args.device)
-                q_attention_mask_tensor = question_batch_in['attention_mask'][:,:-1].to(args.device)
-                q_token_type_ids_tensor = question_batch_in['token_type_ids'][:,:-1].to(args.device)
+                question_input_ids = question_batch_in['input_ids'].to(args.device)
+#                q_input_ids_tensor = question_batch_in['input_ids'][:,:-1].to(args.device)
+#                q_attention_mask_tensor = question_batch_in['attention_mask'][:,:-1].to(args.device)
+#                q_token_type_ids_tensor = question_batch_in['token_type_ids'][:,:-1].to(args.device)
                 
-                Q_emb = bert_model(q_input_ids_tensor, q_attention_mask_tensor, q_token_type_ids_tensor)[0]
+#                Q_emb = bert_model(q_input_ids_tensor, q_attention_mask_tensor, q_token_type_ids_tensor)[0]
                 
                 
             cmask = token_type_ids_tensor.unsqueeze(1).unsqueeze(2)#.unsqueeze(2).repeat(1, 1, 768)
             
-            optimizer.zero_grad()
-            question_word = question_batch_in['input_ids'][:,:-1]
-            X, _ = model(encoded, question_word, Q_emb, cmask)
+            X, _ = model(encoded, question_input_ids, cmask)
+#            optimizer.zero_grad()
+#            question_word = question_batch_in['input_ids'][:,:-1]
+#            X, _ = model(encoded, question_word, Q_emb, cmask)
             output_dim = X.shape[-1]
             X = X.contiguous().view(-1, output_dim)
             
-            label = question_batch_in['input_ids'][:,1:].contiguous().view(-1).to(args.device)
+            # question_batch_in['input_ids']
+            label = question_input_ids[:,1:].contiguous().view(-1).to(args.device)
         
         else:
             model.train()
@@ -468,10 +472,11 @@ def main():
     data = SQuAD(args)
     if args.encoder_type == 'bert':
         setattr(args, 'd_model', 768 // args.n_head)
-        setattr(args, 'tokenizer', AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True, padding_side='left'))
-        setattr(args, 'decoder_tokenizer', AlbertTokenizer.from_pretrained('albert-base-v2', do_lower_case=True, padding_side='right'))
+        setattr(args, 'tokenizer', BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True, padding_side='left'))
+        setattr(args, 'decoder_tokenizer', BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True, padding_side='right'))
         setattr(args, 'pad_idx_decoder', args.decoder_tokenizer.pad_token_id)
         setattr(args, 'output_dim', args.tokenizer.vocab_size)
+        setattr(args, 'hidden_size', 64) # bert have size 128 for embedding
     else:
         setattr(args, 'd_model', 768 // args.n_head) # 96
         setattr(args, 'char_vocab_size', len(data.CHAR.vocab))
