@@ -48,7 +48,8 @@ def train(args, data):
 #    test_bound = 2
 #    iterator = data.train_iter
     model.train()
-    bert_model.eval()
+    if args.encoder_type == 'bert': bert_model.eval()
+    
     print('training')
     for i, batch in enumerate(tqdm(data.train_iter)):
         start_time = time.time()
@@ -62,6 +63,7 @@ def train(args, data):
         last_epoch = present_epoch
         
         if args.encoder_type == 'bert':
+            
             if last_epoch > 0:
                 bleu_score = calculate_bleu_bert(args, data.dev, bert_model, model)
                 print('bleu score after {} epoch is {}'. format(last_epoch, bleu_score))
