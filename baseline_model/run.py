@@ -63,6 +63,8 @@ def train(args, data):
             print('epoch:', present_epoch + 1)
         last_epoch = present_epoch
         
+        optimizer.zero_grad()
+        
         if args.encoder_type == 'bert':
             if last_epoch > 0:
                 bleu_score = calculate_bleu_bert(args, data.dev, bert_model, model)
@@ -91,10 +93,8 @@ def train(args, data):
                 
                 
             cmask = token_type_ids_tensor.unsqueeze(1).unsqueeze(2)#.unsqueeze(2).repeat(1, 1, 768)
-            
             X, _ = model(encoded, question_input_ids, cmask)
             
-            optimizer.zero_grad()
 #            question_word = question_batch_in['input_ids'][:,:-1]
 #            X, _ = model(encoded, question_word, Q_emb, cmask)
             output_dim = X.shape[-1]
@@ -104,8 +104,7 @@ def train(args, data):
             label = question_input_ids[:,1:].contiguous().view(-1).to(args.device)
         
         else:
-            model.train()
-            optimizer.zero_grad()
+            
             
             context_word, context_char = batch.c_word[0], batch.c_char
             answer_word, answer_char = batch.a_word[0], batch.a_char
@@ -465,7 +464,7 @@ def main():
     parser.add_argument('--encoder-type', default='bert')
     
     args = parser.parse_args()
-    setattr(args, 'device', torch.device("cuda:{}".format(args.gpu) if torch.cuda.is_available() else "cpu"))#
+    setattr(args, 'device', 'cpu')#torch.device("cuda:{}".format(args.gpu) if torch.cuda.is_available() else "cpu")
     print('loading SQuAD data...')
     
     data = SQuAD(args)

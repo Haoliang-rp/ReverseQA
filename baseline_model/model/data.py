@@ -201,8 +201,6 @@ class SQuAD():
                             
                             
                             if ''.join(tokens[s_idx: e_idx+1]) != answer.replace(" ", ""):
-    #                             print(''.join(tokens[s_idx: e_idx+1]))
-    #                             print(answer.replace(" ", ""))
                                 alignment_problems += 1
                             
                             dump.append(dict([('id', id),
