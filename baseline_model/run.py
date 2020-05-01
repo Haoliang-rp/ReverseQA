@@ -64,7 +64,6 @@ def train(args, data):
         last_epoch = present_epoch
         
         if args.encoder_type == 'bert':
-            
             if last_epoch > 0:
                 bleu_score = calculate_bleu_bert(args, data.dev, bert_model, model)
                 print('bleu score after {} epoch is {}'. format(last_epoch, bleu_score))
@@ -94,7 +93,8 @@ def train(args, data):
             cmask = token_type_ids_tensor.unsqueeze(1).unsqueeze(2)#.unsqueeze(2).repeat(1, 1, 768)
             
             X, _ = model(encoded, question_input_ids, cmask)
-#            optimizer.zero_grad()
+            
+            optimizer.zero_grad()
 #            question_word = question_batch_in['input_ids'][:,:-1]
 #            X, _ = model(encoded, question_word, Q_emb, cmask)
             output_dim = X.shape[-1]
@@ -200,18 +200,18 @@ def test(args, model, data, bert_model=None):#, ema
                 outputs = bert_model(input_ids_tensor, attention_mask_tensor, token_type_ids_tensor)
                 encoded = outputs[0]
                 
-                q_input_ids_tensor = question_batch_in['input_ids'][:,:-1].to(args.device)
-                q_attention_mask_tensor = question_batch_in['attention_mask'][:,:-1].to(args.device)
-                q_token_type_ids_tensor = question_batch_in['token_type_ids'][:,:-1].to(args.device)
+                question_input_ids = question_batch_in['input_ids'].to(args.device)
+#                q_input_ids_tensor = question_batch_in['input_ids'][:,:-1].to(args.device)
+#                q_attention_mask_tensor = question_batch_in['attention_mask'][:,:-1].to(args.device)
+#                q_token_type_ids_tensor = question_batch_in['token_type_ids'][:,:-1].to(args.device)
                 
-                Q_emb = bert_model(q_input_ids_tensor, q_attention_mask_tensor, q_token_type_ids_tensor)[0]
-                
+#                Q_emb = bert_model(q_input_ids_tensor, q_attention_mask_tensor, q_token_type_ids_tensor)[0]
                 
                 
                 cmask = token_type_ids_tensor.unsqueeze(1).unsqueeze(2)#.unsqueeze(2).repeat(1, 1, 768)
-                
-                question_word = question_batch_in['input_ids'][:,:-1]
-                X, _ = model(encoded, question_word, Q_emb, cmask)
+                X, _ = model(encoded, question_input_ids, cmask)
+#                question_word = question_batch_in['input_ids'][:,:-1]
+#                X, _ = model(encoded, question_word, Q_emb, cmask)
                 output_dim = X.shape[-1]
                 X = X.contiguous().view(-1, output_dim)
                 
