@@ -62,6 +62,7 @@ def train(args, data):
                 bleu_score = calculate_bleu_bert(args, data.dev, bert_model, model)
                 print('bleu score after {} epoch is {}'. format(last_epoch, bleu_score))
                 
+            print('here')
             training_batch = list(zip(batch.answer, batch.context))
             training_batch_in = args.tokenizer.batch_encode_plus(training_batch, add_special_tokens=True, pad_to_max_length=True, return_tensors="pt")
             
