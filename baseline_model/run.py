@@ -218,7 +218,7 @@ def test(args, model, data, bert_model=None):#, ema
 #            if param.requires_grad:
 #                param.data.copy_(backup_params.get(name))
 
-    return loss / n
+    return loss / num
 
 def epoch_time(start_time, end_time):
     elapsed_time = end_time - start_time
