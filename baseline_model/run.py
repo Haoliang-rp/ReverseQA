@@ -448,7 +448,7 @@ def main():
     parser.add_argument('--save-freq', default=300, type=int)
     parser.add_argument('--epoch', default=25, type=int)
 #    parser.add_argument('--decaying-rate', default=0.98, type=int)
-    parser.add_argument('--cur-model-path', default='saved_models/BASE_bert_14:41:17.pt')
+    parser.add_argument('--cur-model-path', default='saved_models/BASE_bert_09:22:02.pt')
     parser.add_argument('--from-prev', default=True)
     
     args = parser.parse_args()
