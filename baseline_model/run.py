@@ -20,6 +20,9 @@ def train(args, data):
     if args.encoder_type == 'bert':
         bert_model = BertModel.from_pretrained('bert-base-uncased').to(args.device) # AlbertModel.from_pretrained('albert-base-v2').to(args.device)
         model = Baseline_Bert(args, bert_model).to(args.device)
+        if args.from_prev:
+            print('loading {} model'.format(args.cur_model_path))
+            model.load_state_dict(torch.load(args.cur_model_path))
     else:
         model = Baseline(args, data.WORD.vocab.vectors).to(args.device)
     
@@ -415,10 +418,6 @@ def main():
     
     parser.add_argument('--encoder-type', default='bert')
     
-    parser.add_argument('--char-dim', default=8, type=int)
-    parser.add_argument('--char-channel-width', default=3, type=int)
-    parser.add_argument('--char-channel-size', default=100, type=int)
-    
     parser.add_argument('--dev-batch-size', default=100, type=int)
     parser.add_argument('--dev-file', default='dev-v2.0.json')
     parser.add_argument('--train-batch-size', default=60, type=int)
@@ -440,7 +439,7 @@ def main():
     parser.add_argument('--max-len-answer', default=30, type=int)
     parser.add_argument('--max-len-question', default=30, type=int)
     
-    parser.add_argument('--conv-num', default=4, type=int)
+    
     parser.add_argument('--kernel-size', default=5, type=int)
     parser.add_argument('--CLIP', default=1, type=int)
     
@@ -448,6 +447,8 @@ def main():
     parser.add_argument('--save-freq', default=300, type=int)
     parser.add_argument('--epoch', default=25, type=int)
 #    parser.add_argument('--decaying-rate', default=0.98, type=int)
+    parser.add_argument('--cur-model-path', default='saved_models/BASE_bert_18:11:12.pt')
+    parser.add_argument('--from-prev', default=True)
     
     args = parser.parse_args()
     setattr(args, 'device', torch.device("cuda:{}".format(args.gpu) if torch.cuda.is_available() else "cpu"))#'cpu'
@@ -469,6 +470,10 @@ def main():
         setattr(args, 'pad_idx_decoder', data.WORD_DECODER.vocab.stoi[data.WORD_DECODER.pad_token])
         setattr(args, 'output_dim', len(data.WORD_DECODER.vocab))
         setattr(args, 'hidden_size', 100)
+        setattr(args, 'char_dim', 8)
+        setattr(args, 'char_channel_width', 3)
+        setattr(args, 'char_channel_size', 100)
+        setattr(args, 'conv_num', 4)
 #        setattr(args, 'dataset_file', '.data/squad/{}'.format(args.dev_file))
         
     setattr(args, 'prediction_file', 'prediction{}.out'.format(args.gpu))
