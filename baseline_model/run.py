@@ -56,9 +56,10 @@ def train(args, data):
 #        
         if present_epoch > last_epoch:
             print('epoch:', present_epoch + 1)
-            if args.encoder_type == 'bert' and present_epoch > 0:#
+            if args.encoder_type == 'bert' and present_epoch > -1:#
                 bleu_score = calculate_bleu_bert(args, data.dev, bert_model, model)
                 print('bleu score after {} epoch is {}'. format(last_epoch, bleu_score))
+                break
         last_epoch = present_epoch
         
         optimizer.zero_grad()
@@ -273,9 +274,9 @@ def calculate_bleu_bert(args, data, bert_model, model):
 #        except:
 #            continue
         preds.append(pred)
-        labels.append(ques_token)
+        labels.append([ques_token])
     
-    return bleu_score(preds, labels)
+    return bleu_score(preds, labels, max_n=2, weights=[0.5, 0.5])
                
 def generate_question(args, c_word, c_char, a_word, a_char, model, data):
     '''
@@ -447,7 +448,7 @@ def main():
     parser.add_argument('--save-freq', default=300, type=int)
     parser.add_argument('--epoch', default=25, type=int)
 #    parser.add_argument('--decaying-rate', default=0.98, type=int)
-    parser.add_argument('--cur-model-path', default='saved_models/BASE_bert_18:11:12.pt')
+    parser.add_argument('--cur-model-path', default='saved_models/BASE_bert_14:41:17.pt')
     parser.add_argument('--from-prev', default=True)
     
     args = parser.parse_args()
