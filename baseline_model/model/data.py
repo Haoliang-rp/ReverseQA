@@ -272,9 +272,9 @@ class SQuAD():
                             if cur_answer_len > self.max_len_answer:
                                 continue
                             
-                            encoding = tokenizer.encode_plus(question, context).to(self.args.device)
+                            encoding = tokenizer.encode_plus(question, context)
                             input_ids, token_type_ids = encoding["input_ids"], encoding["token_type_ids"]
-                            start_scores, end_scores = model(torch.tensor([input_ids]), token_type_ids=torch.tensor([token_type_ids]))
+                            start_scores, end_scores = model(torch.tensor([input_ids]).to(self.args.device), token_type_ids=torch.tensor([token_type_ids]).to(self.args.device))
                             
                             all_tokens = tokenizer.convert_ids_to_tokens(input_ids)
                             
