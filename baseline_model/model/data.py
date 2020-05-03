@@ -150,85 +150,85 @@ class SQuAD():
             json_data = json.load(f)
             json_data = json_data['data']
     
-            for article in tqdm(json_data):
-                for paragraph in article['paragraphs']:
-                    context = paragraph['context']
+        for article in tqdm(json_data):
+            for paragraph in article['paragraphs']:
+                context = paragraph['context']
+                
+                cur_context_len = len(word_tokenize(context))
+                if cur_context_len > self.max_len_context:
+                    continue
+                
+                tokens = word_tokenize(context)
+                for qa in paragraph['qas']:
+                    id = qa['id']
+                    question = qa['question']
                     
-                    cur_context_len = len(word_tokenize(context))
-                    if cur_context_len > self.max_len_context:
+                    cur_question_len = len(word_tokenize(question))
+                    if cur_question_len > self.max_len_question:
                         continue
                     
-                    tokens = word_tokenize(context)
-                    for qa in paragraph['qas']:
-                        id = qa['id']
-                        question = qa['question']
-                        
-                        cur_question_len = len(word_tokenize(question))
-                        if cur_question_len > self.max_len_question:
-                            continue
-                        
-                        if create_question:
-                            questions.append(question)
-                        
-                        if qa['is_impossible']:
-                            num_impossible += 1
-                            continue
-                            
-                        for ans in qa['answers']:
-                            answer = ans['text']
-                            
-                            cur_answer_len = len(word_tokenize(answer))
-                            if cur_answer_len > self.max_len_answer:
-                                continue
-                            
-                            s_idx = ans['answer_start']
-                            e_idx = s_idx + len(answer)
-                            
-                            
-                            l = 0
-                            s_found = False
-                            for i, t in enumerate(tokens):
-                                while l < len(context):
-                                    if context[l] in abnormals:
-                                        l += 1
-                                    else:
-                                        break
-                                # exceptional cases
-                                if t[0] == '"' and context[l:l + 2] == '\'\'':
-                                    t = '\'\'' + t[1:]
-                                elif t == '"' and context[l:l + 2] == '\'\'':
-                                    t = '\'\''
-    
-                                l += len(t)
-                                if l > s_idx and s_found == False:
-                                    s_idx = i
-                                    s_found = True
-                                if l >= e_idx:
-                                    e_idx = i
-                                    break
-                            
-                            
-                            if ''.join(tokens[s_idx: e_idx+1]) != answer.replace(" ", ""):
-                                alignment_problems += 1
-                            
-                            dump.append(dict([('id', id),
-                                              ('context', context),
-                                              ('question', question),
-                                              ('answer', answer),
-                                              ('s_idx', s_idx),
-                                              ('e_idx', e_idx)]))
-            
-            with open('{}l'.format(path), 'w', encoding='utf-8') as f:
-                for line in dump:
-                    json.dump(line, f)
-                    print('', file=f)
-            
-            if create_question:
-                with open('questions.pickle', 'wb') as f:
-                    pickle.dump(questions, f)
+                    if create_question:
+                        questions.append(question)
                     
-            print('--data have alignment_problems: {}'.format(alignment_problems))
-            print('--questions do not have answer: {}'.format(num_impossible))
+                    if qa['is_impossible']:
+                        num_impossible += 1
+                        continue
+                        
+                    for ans in qa['answers']:
+                        answer = ans['text']
+                        
+                        cur_answer_len = len(word_tokenize(answer))
+                        if cur_answer_len > self.max_len_answer:
+                            continue
+                        
+                        s_idx = ans['answer_start']
+                        e_idx = s_idx + len(answer)
+                        
+                        
+                        l = 0
+                        s_found = False
+                        for i, t in enumerate(tokens):
+                            while l < len(context):
+                                if context[l] in abnormals:
+                                    l += 1
+                                else:
+                                    break
+                            # exceptional cases
+                            if t[0] == '"' and context[l:l + 2] == '\'\'':
+                                t = '\'\'' + t[1:]
+                            elif t == '"' and context[l:l + 2] == '\'\'':
+                                t = '\'\''
+
+                            l += len(t)
+                            if l > s_idx and s_found == False:
+                                s_idx = i
+                                s_found = True
+                            if l >= e_idx:
+                                e_idx = i
+                                break
+                        
+                        
+                        if ''.join(tokens[s_idx: e_idx+1]) != answer.replace(" ", ""):
+                            alignment_problems += 1
+                        
+                        dump.append(dict([('id', id),
+                                          ('context', context),
+                                          ('question', question),
+                                          ('answer', answer),
+                                          ('s_idx', s_idx),
+                                          ('e_idx', e_idx)]))
+        
+        with open('{}l'.format(path), 'w', encoding='utf-8') as f:
+            for line in dump:
+                json.dump(line, f)
+                print('', file=f)
+        
+        if create_question:
+            with open('questions.pickle', 'wb') as f:
+                pickle.dump(questions, f)
+                
+        print('--data have alignment_problems: {}'.format(alignment_problems))
+        print('--questions do not have answer: {}'.format(num_impossible))
         
     def preprocess_file_bert(self, path, create_question=False):
         tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -243,55 +243,55 @@ class SQuAD():
             json_data = json.load(f)
             json_data = json_data['data']
 
-            for article in tqdm(json_data):
-                for paragraph in article['paragraphs']:
-                    context = paragraph['context']
+        for article in tqdm(json_data):
+            for paragraph in article['paragraphs']:
+                context = paragraph['context']
+                
+                context_tokens = tokenizer.tokenize(context)
+                cur_context_len = len(context_tokens)
+                if cur_context_len > self.max_len_context:
+                    continue
+                
+                for qa in paragraph['qas']:
+                    id = qa['id']
+                    question = qa['question']
                     
-                    context_tokens = tokenizer.tokenize(context)
-                    cur_context_len = len(context_tokens)
-                    if cur_context_len > self.max_len_context:
+                    cur_question_len = len(tokenizer.tokenize(question))
+                    if cur_question_len > self.max_len_question:
                         continue
                     
-                    for qa in paragraph['qas']:
-                        id = qa['id']
-                        question = qa['question']
+                    if qa['is_impossible']:
+                        num_impossible += 1
+                        continue
+                    
+                    for ans in qa['answers']:
+                        answer = ans['text']
                         
-                        cur_question_len = len(tokenizer.tokenize(question))
-                        if cur_question_len > self.max_len_question:
+                        answer_tokens = tokenizer.tokenize(answer)
+                        cur_answer_len = len(answer_tokens)
+                        if cur_answer_len > self.max_len_answer:
                             continue
                         
-                        if qa['is_impossible']:
-                            num_impossible += 1
-                            continue
+                        encoding = tokenizer.encode_plus(question, context)
+                        input_ids, token_type_ids = encoding["input_ids"], encoding["token_type_ids"]
+                        start_scores, end_scores = model(torch.tensor([input_ids]).to(self.args.device), token_type_ids=torch.tensor([token_type_ids]).to(self.args.device))
                         
-                        for ans in qa['answers']:
-                            answer = ans['text']
-                            
-                            answer_tokens = tokenizer.tokenize(answer)
-                            cur_answer_len = len(answer_tokens)
-                            if cur_answer_len > self.max_len_answer:
-                                continue
-                            
-                            encoding = tokenizer.encode_plus(question, context)
-                            input_ids, token_type_ids = encoding["input_ids"], encoding["token_type_ids"]
-                            start_scores, end_scores = model(torch.tensor([input_ids]).to(self.args.device), token_type_ids=torch.tensor([token_type_ids]).to(self.args.device))
-                            
-                            all_tokens = tokenizer.convert_ids_to_tokens(input_ids)
-                            
-                            s_idx = torch.argmax(start_scores) - cur_question_len - 2
-                            e_idx = torch.argmax(end_scores) - cur_question_len - 2
-                            
-                            bert_answer = all_tokens[cur_question_len+2:][s_idx.item():e_idx.item()+1]
-                            if bert_answer != answer_tokens:
-                                alignment_problems += 1
-                                continue
-                            else:
-                                dump.append(dict([('id', id),
-                                                  ('context', context),
-                                                  ('question', question),
-                                                  ('answer', answer),
-                                                  ('s_idx', s_idx.item()),
-                                                  ('e_idx', e_idx.item())]))
+                        all_tokens = tokenizer.convert_ids_to_tokens(input_ids)
+                        
+                        s_idx = torch.argmax(start_scores) - cur_question_len - 2
+                        e_idx = torch.argmax(end_scores) - cur_question_len - 2
+                        
+                        bert_answer = all_tokens[cur_question_len+2:][s_idx.item():e_idx.item()+1]
+                        if bert_answer != answer_tokens:
+                            alignment_problems += 1
+                            continue
+                        else:
+                            dump.append(dict([('id', id),
+                                              ('context', context),
+                                              ('question', question),
+                                              ('answer', answer),
+                                              ('s_idx', s_idx.item()),
+                                              ('e_idx', e_idx.item())]))
         
         with open('{}l_bert'.format(path), 'w', encoding='utf-8') as f:
             for line in dump:

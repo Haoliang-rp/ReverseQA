@@ -74,6 +74,8 @@ def train(args, data):
                 attention_mask_tensor = training_batch_in['attention_mask'].to(args.device)
                 token_type_ids_tensor = training_batch_in['token_type_ids'].to(args.device)
                 
+                token_type_ids_tensor = add_pos_info(token_type_ids_tensor, batch.s_idx, batch.e_idx, batch.context, args.tokenizer)
+                
                 if input_ids_tensor.size(1) > 511: continue
                 outputs = bert_model(input_ids_tensor, attention_mask_tensor, token_type_ids_tensor)
                 encoded = outputs[0]
@@ -127,7 +129,7 @@ def train(args, data):
             print('train loss: {} | dev loss: {}'.format(batch_loss, dev_loss))
             
             if args.encoder_type == 'bert':
-                ques, att = generate_question_bert_enc(args, batch.answer[0], batch.context[0], bert_model, model)
+                ques, att = generate_question_bert_enc(args, batch.answer[0], batch.context[0], batch.s_idx[0], batch.e_idx[0], bert_model, model)
                 print('sample question: {}'.format(' '.join(ques)))
                 print('real question: {}'.format(batch.question[0]))
             else:
@@ -186,6 +188,8 @@ def test(args, model, data, bert_model=None):#, ema
                 outputs = bert_model(input_ids_tensor, attention_mask_tensor, token_type_ids_tensor)
                 encoded = outputs[0]
                 
+                token_type_ids_tensor = add_pos_info(token_type_ids_tensor, batch.s_idx, batch.e_idx, batch.context, args.tokenizer)
+                
                 question_input_ids = question_batch_in['input_ids'].to(args.device)
 #                q_input_ids_tensor = question_batch_in['input_ids'][:,:-1].to(args.device)
 #                q_attention_mask_tensor = question_batch_in['attention_mask'][:,:-1].to(args.device)
@@ -222,6 +226,14 @@ def test(args, model, data, bert_model=None):#, ema
 #                param.data.copy_(backup_params.get(name))
 
     return loss / num
+
+def add_pos_info(token_type_ids_tensor, s_idx, e_idx, context, tokenizer):
+    for i in range(len(context)):
+        context_token_len = len(tokenizer.tokenize(context[i]))
+        
+        token_type_ids_tensor[i][-context_token_len+s_idx[i]:-context_token_len+e_idx[i]+1] = \
+        torch.zeros_like(token_type_ids_tensor[i][-context_token_len+s_idx[i]:-context_token_len+e_idx[i]+1])
+    return token_type_ids_tensor
 
 def epoch_time(start_time, end_time):
     elapsed_time = end_time - start_time
@@ -264,11 +276,13 @@ def calculate_bleu_bert(args, data, bert_model, model):
         answer = example.answer
         context = example.context
         question = example.question
+        s_idx = example.s_idx
+        e_idx = example.e_idx
 #        ques_token = args.decoder_tokenizer.encode_plus(question, add_special_tokens=False, pad_to_max_length=False, return_tensors="pt")
 #        ques_token = args.decoder_tokenizer.convert_ids_to_tokens(ques_token['input_ids'][0])
         ques_token = args.decoder_tokenizer.tokenize(question)
         
-        pred, _ = generate_question_bert_enc(args, answer, context, bert_model, model)
+        pred, _ = generate_question_bert_enc(args, answer, context, s_idx, e_idx, bert_model, model)
 
         preds.append(pred)
         labels.append([ques_token])
@@ -340,7 +354,7 @@ def generate_question(args, c_word, c_char, a_word, a_char, model, data):
             break
     return word, attention
 
-def generate_question_bert_enc(args, answer, context, bert_model, model, max_len_question=30):
+def generate_question_bert_enc(args, answer, context, s_idx, e_idx, bert_model, model, max_len_question=30):
     '''
     answer: untokenized string
     context: untokenized string
@@ -354,6 +368,9 @@ def generate_question_bert_enc(args, answer, context, bert_model, model, max_len
         input_ids_tensor = test_pair_in['input_ids'].to(device)
         attention_mask_tensor = test_pair_in['attention_mask'].to(device)
         token_type_ids_tensor = test_pair_in['token_type_ids'].to(device)
+        
+        token_type_ids_tensor = add_pos_info(token_type_ids_tensor, s_idx, e_idx, context, args.tokenizer)
+        
         outputs = bert_model(input_ids_tensor, attention_mask_tensor, token_type_ids_tensor)
         encoded = outputs[0]
         
