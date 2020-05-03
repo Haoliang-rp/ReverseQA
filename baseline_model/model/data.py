@@ -29,10 +29,16 @@ class SQuAD():
         self.max_len_answer = args.max_len_answer
 
         print("preprocessing data files...")
-        if not os.path.exists('{}/{}l_bert'.format(path, args.train_file)):
-            self.preprocess_file_bert('{}/{}'.format(path, args.train_file), create_question=True)
-        if not os.path.exists('{}/{}l'.format(path, args.dev_file)):
-            self.preprocess_file('{}/{}'.format(path, args.dev_file))
+        if args.encoder_type == 'bert':
+            if not os.path.exists('{}/{}l_bert'.format(path, args.train_file)):
+                self.preprocess_file_bert('{}/{}'.format(path, args.train_file), create_question=True)
+            if not os.path.exists('{}/{}l_bert'.format(path, args.dev_file)):
+                self.preprocess_file('{}/{}'.format(path, args.dev_file))
+        else:
+            if not os.path.exists('{}/{}l'.format(path, args.train_file)):
+                self.preprocess_file_bert('{}/{}'.format(path, args.train_file), create_question=True)
+            if not os.path.exists('{}/{}l'.format(path, args.dev_file)):
+                self.preprocess_file('{}/{}'.format(path, args.dev_file))
 
         self.RAW = data.RawField()
 
@@ -92,13 +98,13 @@ class SQuAD():
             self.dev = data.Dataset(examples=dev_examples, fields=list_fields)
         else:
             print("building splits...")
-
             self.train, self.dev = data.TabularDataset.splits(
                 path=path,
-                train='{}l'.format(args.train_file),
-                validation='{}l'.format(args.dev_file),
+                train='{}l_bert'.format(args.train_file) if args.encoder_type == 'bert' else '{}l'.format(args.train_file),
+                validation='{}l_bert'.format(args.dev_file) if args.encoder_type == 'bert' else '{}l'.format(args.dev_file),
                 format='json',
-                fields=dict_fields)
+                fields=dict_fields
+            )
             try:
                 os.makedirs(dataset_path)
             except:
