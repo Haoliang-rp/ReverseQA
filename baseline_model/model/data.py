@@ -292,7 +292,9 @@ class SQuAD():
                                                   ('answer', answer),
                                                   ('s_idx', s_idx.item()),
                                                   ('e_idx', e_idx.item())]))
-                            
+        
+        print('file: ', path)
+        print(dump)
         with open('{}l_bert'.format(path), 'w', encoding='utf-8') as f:
             for line in dump:
                 json.dump(line, f)
