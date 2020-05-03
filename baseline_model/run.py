@@ -59,7 +59,6 @@ def train(args, data):
             if args.encoder_type == 'bert' and present_epoch > -1:#
                 bleu_score = calculate_bleu_bert(args, data.dev, bert_model, model)
                 print('bleu score after {} epoch is {}'. format(last_epoch, bleu_score))
-                break
         last_epoch = present_epoch
         
         optimizer.zero_grad()
