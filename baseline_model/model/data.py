@@ -274,8 +274,8 @@ class SQuAD():
                             
                             all_tokens = tokenizer.convert_ids_to_tokens(input_ids)
                             
-                            s_idx = torch.argmax(start_scores).item() - cur_question_len - 2
-                            e_idx = torch.argmax(end_scores).item() - cur_question_len - 2
+                            s_idx = torch.argmax(start_scores) - cur_question_len - 2
+                            e_idx = torch.argmax(end_scores) - cur_question_len - 2
                             
                             bert_answer = all_tokens[cur_question_len+2:][s_idx.item():e_idx.item()+1]
                             if bert_answer != answer_tokens:
