@@ -463,7 +463,7 @@ def main():
     parser.add_argument('--epoch', default=25, type=int)
 #    parser.add_argument('--decaying-rate', default=0.98, type=int)
     parser.add_argument('--cur-model-path', default='saved_models/BASE_bert_09:22:02.pt')
-    parser.add_argument('--from-prev', default=True)
+    parser.add_argument('--from-prev', default=False)
     
     args = parser.parse_args()
     setattr(args, 'device', torch.device("cuda:{}".format(args.gpu) if torch.cuda.is_available() else "cpu"))#'cpu'
