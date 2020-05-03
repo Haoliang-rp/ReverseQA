@@ -5,6 +5,7 @@ import nltk
 import torch
 import pickle
 from tqdm import tqdm
+from transformers import BertTokenizer, BertForQuestionAnswering
 
 from torchtext import data
 from torchtext.vocab import GloVe
@@ -28,8 +29,8 @@ class SQuAD():
         self.max_len_answer = args.max_len_answer
 
         print("preprocessing data files...")
-        if not os.path.exists('{}/{}l'.format(path, args.train_file)):
-            self.preprocess_file('{}/{}'.format(path, args.train_file), create_question=True)
+        if not os.path.exists('{}/{}l_bert'.format(path, args.train_file)):
+            self.preprocess_file_bert('{}/{}'.format(path, args.train_file), create_question=True)
         if not os.path.exists('{}/{}l'.format(path, args.dev_file)):
             self.preprocess_file('{}/{}'.format(path, args.dev_file))
 
@@ -221,3 +222,81 @@ class SQuAD():
                     
             print('--data have alignment_problems: {}'.format(alignment_problems))
             print('--questions do not have answer: {}'.format(num_impossible))
+        
+    def preprocess_file_bert(self, path, create_question=False):
+        tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+        model = BertForQuestionAnswering.from_pretrained('bert-large-uncased-whole-word-masking-finetuned-squad')
+        
+        dump = []
+        questions = []
+        alignment_problems = 0
+        num_impossible = 0
+        
+        with open(path, 'r', encoding='utf-8') as f:
+            json_data = json.load(f)
+            json_data = json_data['data']
+            
+            i = 0
+            for article in tqdm(json_data):
+                i += 1
+                if i > 6: break
+                for paragraph in article['paragraphs']:
+                    context = paragraph['context']
+                    
+                    context_tokens = tokenizer.tokenize(context)
+                    cur_context_len = len(context_tokens)
+                    if cur_context_len > self.max_len_context:
+                        continue
+                    
+                    for qa in paragraph['qas']:
+                        id = qa['id']
+                        question = qa['question']
+                        
+                        cur_question_len = len(tokenizer.tokenize(question))
+                        if cur_question_len > self.max_len_question:
+                            continue
+                        
+                        if qa['is_impossible']:
+                            num_impossible += 1
+                            continue
+                        
+                        for ans in qa['answers']:
+                            answer = ans['text']
+                            
+                            answer_tokens = tokenizer.tokenize(answer)
+                            cur_answer_len = len(answer_tokens)
+                            if cur_answer_len > self.max_len_answer:
+                                continue
+                            
+                            encoding = tokenizer.encode_plus(question, context)
+                            input_ids, token_type_ids = encoding["input_ids"], encoding["token_type_ids"]
+                            start_scores, end_scores = model(torch.tensor([input_ids]), token_type_ids=torch.tensor([token_type_ids]))
+                            
+                            all_tokens = tokenizer.convert_ids_to_tokens(input_ids)
+                            
+                            s_idx = torch.argmax(start_scores).item() - cur_question_len - 2
+                            e_idx = torch.argmax(end_scores).item() - cur_question_len - 2
+                            
+                            bert_answer = all_tokens[cur_question_len+2:][s_idx.item():e_idx.item()+1]
+                            if bert_answer != answer_tokens:
+                                alignment_problems += 1
+                                continue
+                            else:
+                                dump.append(dict([('id', id),
+                                                  ('context', context),
+                                                  ('question', question),
+                                                  ('answer', answer),
+                                                  ('s_idx', s_idx.item()),
+                                                  ('e_idx', e_idx.item())]))
+                            
+        with open('{}l_bert'.format(path), 'w', encoding='utf-8') as f:
+            for line in dump:
+                json.dump(line, f)
+                print('', file=f)
+    
+        if create_question:
+            with open('questions.pickle', 'wb') as f:
+                pickle.dump(questions, f)
+    
+        print('--data have alignment_problems: {}'.format(alignment_problems))
+        print('--questions do not have answer: {}'.format(num_impossible))
