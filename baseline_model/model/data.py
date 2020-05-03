@@ -231,7 +231,7 @@ class SQuAD():
             print('--questions do not have answer: {}'.format(num_impossible))
         
     def preprocess_file_bert(self, path, create_question=False):
-        tokenizer = BertTokenizer.from_pretrained('bert-base-uncased').to(self.args.device)
+        tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
         model = BertForQuestionAnswering.from_pretrained('bert-large-uncased-whole-word-masking-finetuned-squad').to(self.args.device)
         
         dump = []
