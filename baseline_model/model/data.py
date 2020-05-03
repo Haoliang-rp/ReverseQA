@@ -15,6 +15,7 @@ def word_tokenize(tokens):
 
 class SQuAD():
     def __init__(self, args):
+        self.args = args
         path = 'data'
         dataset_path = path + '/torchtext/'
         if args.encoder_type == 'bert':
@@ -230,8 +231,8 @@ class SQuAD():
             print('--questions do not have answer: {}'.format(num_impossible))
         
     def preprocess_file_bert(self, path, create_question=False):
-        tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-        model = BertForQuestionAnswering.from_pretrained('bert-large-uncased-whole-word-masking-finetuned-squad')
+        tokenizer = BertTokenizer.from_pretrained('bert-base-uncased').to(self.args.device)
+        model = BertForQuestionAnswering.from_pretrained('bert-large-uncased-whole-word-masking-finetuned-squad').to(self.args.device)
         
         dump = []
         questions = []
@@ -271,7 +272,7 @@ class SQuAD():
                             if cur_answer_len > self.max_len_answer:
                                 continue
                             
-                            encoding = tokenizer.encode_plus(question, context)
+                            encoding = tokenizer.encode_plus(question, context).to(self.args.device)
                             input_ids, token_type_ids = encoding["input_ids"], encoding["token_type_ids"]
                             start_scores, end_scores = model(torch.tensor([input_ids]), token_type_ids=torch.tensor([token_type_ids]))
                             
