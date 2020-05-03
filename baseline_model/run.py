@@ -369,7 +369,10 @@ def generate_question_bert_enc(args, answer, context, s_idx, e_idx, bert_model, 
         attention_mask_tensor = test_pair_in['attention_mask'].to(device)
         token_type_ids_tensor = test_pair_in['token_type_ids'].to(device)
         
-        token_type_ids_tensor = add_pos_info(token_type_ids_tensor, s_idx, e_idx, context, args.tokenizer)
+        context_token_len = len(args.tokenizer.tokenize(context))
+        
+        token_type_ids_tensor[0][-context_token_len+s_idx:-context_token_len+e_idx+1] = \
+        torch.zeros_like(token_type_ids_tensor[0][-context_token_len+s_idx:-context_token_len+e_idx+1])
         
         outputs = bert_model(input_ids_tensor, attention_mask_tensor, token_type_ids_tensor)
         encoded = outputs[0]
