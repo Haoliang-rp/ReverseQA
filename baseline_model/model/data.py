@@ -235,11 +235,8 @@ class SQuAD():
         with open(path, 'r', encoding='utf-8') as f:
             json_data = json.load(f)
             json_data = json_data['data']
-            
-            i = 0
+
             for article in tqdm(json_data):
-                i += 1
-                if i > 6: break
                 for paragraph in article['paragraphs']:
                     context = paragraph['context']
                     
