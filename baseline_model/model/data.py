@@ -34,7 +34,7 @@ class SQuAD():
             if not os.path.exists('{}/{}l_bert'.format(path, args.train_file)):
                 self.preprocess_file_bert('{}/{}'.format(path, args.train_file), create_question=True)
             if not os.path.exists('{}/{}l_bert'.format(path, args.dev_file)):
-                self.preprocess_file('{}/{}'.format(path, args.dev_file))
+                self.preprocess_file_bert('{}/{}'.format(path, args.dev_file))
         else:
             if not os.path.exists('{}/{}l'.format(path, args.train_file)):
                 self.preprocess_file_bert('{}/{}'.format(path, args.train_file), create_question=True)
@@ -293,8 +293,6 @@ class SQuAD():
                                                   ('s_idx', s_idx.item()),
                                                   ('e_idx', e_idx.item())]))
         
-        print('file: ', path)
-        print(dump)
         with open('{}l_bert'.format(path), 'w', encoding='utf-8') as f:
             for line in dump:
                 json.dump(line, f)
