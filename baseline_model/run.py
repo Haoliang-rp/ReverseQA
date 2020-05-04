@@ -456,20 +456,19 @@ def main():
     parser.add_argument('--word-dim', default=100, type=int)
     parser.add_argument('--n-head', default=4, type=int)
     
-    parser.add_argument('--DEC-LAYERS', default=6, type=int)
+    parser.add_argument('--DEC-LAYERS', default=4, type=int)
 #    parser.add_argument('--DEC-HEADS', default=4, type=int)
 
     parser.add_argument('--max-len-context', default=300, type=int)
     parser.add_argument('--max-len-answer', default=30, type=int)
     parser.add_argument('--max-len-question', default=30, type=int)
     
-    
     parser.add_argument('--kernel-size', default=5, type=int)
     parser.add_argument('--CLIP', default=1, type=int)
     
     parser.add_argument('--print-freq', default=300, type=int)
     parser.add_argument('--save-freq', default=300, type=int)
-    parser.add_argument('--epoch', default=25, type=int)
+    parser.add_argument('--epoch', default=18, type=int)
 #    parser.add_argument('--decaying-rate', default=0.98, type=int)
     parser.add_argument('--cur-model-path', default='saved_models/BASE_bert_09:22:02.pt')
     parser.add_argument('--from-prev', default=False)
