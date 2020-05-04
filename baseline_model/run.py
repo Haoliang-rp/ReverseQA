@@ -148,13 +148,13 @@ def train(args, data):
             
             if (i + 1) % args.save_freq == 0 and dev_loss <= best_dev_loss:
                 print('saving model(dev)')
-                torch.save(bert_model.state_dict(), 'saved_bert_models/BASE_{}_{}.pt'.format(args.encoder_type, args.model_time))
-#                torch.save(model.state_dict(), 'saved_models/BASE_{}_{}.pt'.format(args.encoder_type, args.model_time))
+#                torch.save(bert_model.state_dict(), 'saved_bert_models/BASE_{}_{}.pt'.format(args.encoder_type, args.model_time))
+                torch.save(model.state_dict(), 'saved_models/BASE_{}_{}.pt'.format(args.encoder_type, args.model_time))
             
             if (i + 1) % args.save_freq == 0 and batch_loss <= best_train_loss:
                 print('saving model(train)')
-                torch.save(bert_model.state_dict(), 'saved_bert_models/BASE_Train_{}_{}.pt'.format(args.encoder_type, args.model_time))
-#                torch.save(model.state_dict(), 'saved_models/BASE_Train_{}_{}.pt'.format(args.encoder_type, args.model_time))
+#                torch.save(bert_model.state_dict(), 'saved_bert_models/BASE_Train_{}_{}.pt'.format(args.encoder_type, args.model_time))
+                torch.save(model.state_dict(), 'saved_models/BASE_Train_{}_{}.pt'.format(args.encoder_type, args.model_time))
      
     return model
 
