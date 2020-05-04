@@ -13,6 +13,7 @@ from model.data import SQuAD
 from torchtext.data.metrics import bleu_score
 from tqdm import tqdm
 import time
+import copy
 
 from transformers import BertModel, BertTokenizer
 
@@ -74,6 +75,8 @@ def train(args, data):
                 attention_mask_tensor = training_batch_in['attention_mask'].to(args.device)
                 token_type_ids_tensor = training_batch_in['token_type_ids'].to(args.device)
                 
+                cmask = copy.deepcopy(token_type_ids_tensor).unsqueeze(1).unsqueeze(2)#.unsqueeze(2).repeat(1, 1, 768)
+                
                 token_type_ids_tensor = add_pos_info(token_type_ids_tensor, batch.s_idx, batch.e_idx, batch.context, args.tokenizer)
                 
                 if input_ids_tensor.size(1) > 511: continue
@@ -82,7 +85,7 @@ def train(args, data):
                 
                 question_input_ids = question_batch_in['input_ids'].to(args.device)                
                 if question_input_ids.size(1) > args.max_len_question + 9: continue
-            cmask = token_type_ids_tensor.unsqueeze(1).unsqueeze(2)#.unsqueeze(2).repeat(1, 1, 768)
+            
             X, _ = model(encoded, question_input_ids, cmask)
             
             output_dim = X.shape[-1]
@@ -187,6 +190,8 @@ def test(args, model, data, bert_model=None):#, ema
                 token_type_ids_tensor = training_batch_in['token_type_ids'].to(args.device)
                 outputs = bert_model(input_ids_tensor, attention_mask_tensor, token_type_ids_tensor)
                 encoded = outputs[0]
+                
+                cmask = copy.deepcopy(token_type_ids_tensor).unsqueeze(1).unsqueeze(2)
                 
                 token_type_ids_tensor = add_pos_info(token_type_ids_tensor, batch.s_idx, batch.e_idx, batch.context, args.tokenizer)
                 
@@ -371,6 +376,8 @@ def generate_question_bert_enc(args, answer, context, s_idx, e_idx, bert_model, 
         
         context_token_len = len(args.tokenizer.tokenize(context))
         
+        cmask = copy.deepcopy(token_type_ids_tensor).unsqueeze(1).unsqueeze(2)
+        
         token_type_ids_tensor[0][-context_token_len+s_idx:-context_token_len+e_idx+1] = \
         torch.zeros_like(token_type_ids_tensor[0][-context_token_len+s_idx:-context_token_len+e_idx+1])
         
@@ -384,7 +391,6 @@ def generate_question_bert_enc(args, answer, context, s_idx, e_idx, bert_model, 
 #        question_input_ids[0][0] = args.decoder_tokenizer.cls_token_id
 #        question_attention_mask[0][0] = 1
         
-        cmask = token_type_ids_tensor.unsqueeze(1).unsqueeze(2)
         attentions = []
         
         word_idxes = [args.decoder_tokenizer.cls_token_id]
@@ -450,8 +456,8 @@ def main():
     parser.add_argument('--word-dim', default=100, type=int)
     parser.add_argument('--n-head', default=4, type=int)
     
-    parser.add_argument('--DEC-LAYERS', default=4, type=int)
-    parser.add_argument('--DEC-HEADS', default=4, type=int)
+    parser.add_argument('--DEC-LAYERS', default=6, type=int)
+#    parser.add_argument('--DEC-HEADS', default=4, type=int)
 
     parser.add_argument('--max-len-context', default=300, type=int)
     parser.add_argument('--max-len-answer', default=30, type=int)
