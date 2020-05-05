@@ -266,9 +266,9 @@ def calculate_bleu(data, model, device, max_len = 30):
         pred = pred[:-1]
         
         preds.append(pred)
-        labels.append(datum.q_word)
+        labels.append([datum.q_word])
     
-    return bleu_score(preds, labels)
+    return bleu_score(preds, labels, max_n=2, weights=[0.5, 0.5])
 
 def calculate_bleu_bert(args, data, bert_model, model):
     labels = []
@@ -440,7 +440,7 @@ class EMA(object):
 def main():
     parser = argparse.ArgumentParser()
     
-    parser.add_argument('--encoder-type', default='bert')
+    parser.add_argument('--encoder-type', default='non-bert')
     
     parser.add_argument('--dev-batch-size', default=100, type=int)
     parser.add_argument('--dev-file', default='dev-v2.0.json')
