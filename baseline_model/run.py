@@ -419,28 +419,28 @@ def generate_question_bert_enc(args, answer, context, s_idx, e_idx, bert_model, 
         qus = args.decoder_tokenizer.convert_ids_to_tokens(word_idxes)
         return qus[1:i+1], attentions
 
-class EMA(object):
-    def __init__(self, decay):
-        self.decay = decay
-        self.shadows = {}
-        self.devices = {}
-
-    def __len__(self):
-        return len(self.shadows)
-
-    def get(self, name: str):
-        return self.shadows[name].to(self.devices[name])
-
-    def set(self, name: str, param: nn.Parameter):
-        self.shadows[name] = param.data.to('cpu').clone()
-        self.devices[name] = param.data.device
-
-    def update_parameter(self, name: str, param: nn.Parameter):
-        if name in self.shadows:
-            data = param.data
-            new_shadow = self.decay * data + (1.0 - self.decay) * self.get(name)
-            param.data.copy_(new_shadow)
-            self.shadows[name] = new_shadow.to('cpu').clone()
+#class EMA(object):
+#    def __init__(self, decay):
+#        self.decay = decay
+#        self.shadows = {}
+#        self.devices = {}
+#
+#    def __len__(self):
+#        return len(self.shadows)
+#
+#    def get(self, name: str):
+#        return self.shadows[name].to(self.devices[name])
+#
+#    def set(self, name: str, param: nn.Parameter):
+#        self.shadows[name] = param.data.to('cpu').clone()
+#        self.devices[name] = param.data.device
+#
+#    def update_parameter(self, name: str, param: nn.Parameter):
+#        if name in self.shadows:
+#            data = param.data
+#            new_shadow = self.decay * data + (1.0 - self.decay) * self.get(name)
+#            param.data.copy_(new_shadow)
+#            self.shadows[name] = new_shadow.to('cpu').clone()
 
 def main():
     parser = argparse.ArgumentParser()
@@ -467,6 +467,7 @@ def main():
     parser.add_argument('--max-len-context', default=300, type=int)
     parser.add_argument('--max-len-answer', default=30, type=int)
     parser.add_argument('--max-len-question', default=30, type=int)
+    parser.add_argument('--max-len-char', default=30, type=int)
     
     parser.add_argument('--kernel-size', default=5, type=int)
     parser.add_argument('--CLIP', default=1, type=int)
