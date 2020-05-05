@@ -29,10 +29,6 @@ def train(args, data):
         model = Baseline(args, data.WORD.vocab.vectors).to(args.device)
     
 #    ema = EMA(args.exp_decay_rate)
-    c_word, c_char, a_word, a_char = data.train.examples[0].c_word, data.train.examples[0].c_char, data.train.examples[0].a_word, data.train.examples[0].a_char#
-    ques, att = generate_question(args, c_word, c_char, a_word, a_char, model, data)
-    print('sample question: {}'.format(' '.join(ques)))
-    print('real question: {}'.format(data.train.examples[0].q_word))
     
     criterion = nn.CrossEntropyLoss(ignore_index = args.pad_idx_decoder)
     optimizer = torch.optim.AdamW(model.parameters(), lr = args.learning_rate)
@@ -126,7 +122,7 @@ def train(args, data):
         
 #        for name, p in model.named_parameters():
 #            if p.requires_grad: ema.update_parameter(name, p)
-#        
+        case = 0
         if (i + 1) % args.print_freq == 0:
             if args.encoder_type == 'bert':
                 dev_loss = test(args, model, data, bert_model)#, ema
@@ -146,7 +142,7 @@ def train(args, data):
                 print('sample question: {}'.format(' '.join(ques)))
                 print('real question: {}'.format(batch.question[0]))
             else:
-                case = 0
+                
                 c_word, c_char, a_word, a_char = data.dev.examples[case].c_word, data.dev.examples[case].c_char, data.dev.examples[case].a_word, data.dev.examples[case].a_char#
                 ques, att = generate_question(args, c_word, c_char, a_word, a_char, model, data)
                 print('sample question: {}'.format(' '.join(ques)))
@@ -468,7 +464,7 @@ def main():
     parser.add_argument('--word-dim', default=100, type=int)
     parser.add_argument('--n-head', default=4, type=int)
     
-    parser.add_argument('--DEC-LAYERS', default=4, type=int)
+    parser.add_argument('--DEC-LAYERS', default=3, type=int)
 #    parser.add_argument('--DEC-HEADS', default=4, type=int)
 
     parser.add_argument('--max-len-context', default=300, type=int)
@@ -477,7 +473,7 @@ def main():
     parser.add_argument('--max-len-char', default=30, type=int)
     
     parser.add_argument('--kernel-size', default=5, type=int)
-    parser.add_argument('--CLIP', default=1, type=int)
+    parser.add_argument('--CLIP', default=0.25, type=int)
     
     parser.add_argument('--print-freq', default=300, type=int)
     parser.add_argument('--save-freq', default=300, type=int)
