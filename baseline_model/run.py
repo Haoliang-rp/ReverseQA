@@ -141,10 +141,10 @@ def train(args, data):
                 print('sample question: {}'.format(' '.join(ques)))
                 print('real question: {}'.format(batch.question[0]))
             else:
-                c_word, c_char, a_word, a_char = batch.c_word[0], batch.c_char[0], batch.a_word[0], batch.a_char[0]#data.examples[0]
+                c_word, c_char, a_word, a_char = data.train.examples[0].c_word, data.train.examples[0].c_word, data.train.examples[0].c_char, data.train.examples[0].a_word, data.train.examples[0].a_char#
                 ques, att = generate_question(args, c_word, c_char, a_word, a_char, model, data)
                 print('sample question: {}'.format(' '.join(ques)))
-                print('real question: {}'.format(batch.question[0]))
+                print('real question: {}'.format(batch.q_word))
             
             c = (i + 1) // args.print_freq
 
