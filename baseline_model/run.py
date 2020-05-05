@@ -141,7 +141,7 @@ def train(args, data):
                 print('sample question: {}'.format(' '.join(ques)))
                 print('real question: {}'.format(batch.question[0]))
             else:
-                c_word, c_char, a_word, a_char = batch.c_word, batch.c_char, batch.a_word, batch.a_char#data.examples[0]
+                c_word, c_char, a_word, a_char = batch.c_word[0], batch.c_char[0], batch.a_word[0], batch.a_char[0]#data.examples[0]
                 ques, att = generate_question(args, c_word, c_char, a_word, a_char, model, data)
                 print('sample question: {}'.format(' '.join(ques)))
                 print('real question: {}'.format(batch.question[0]))
