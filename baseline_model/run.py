@@ -18,6 +18,7 @@ import copy
 from transformers import BertModel, BertTokenizer
 
 def train(args, data):
+    
     if args.encoder_type == 'bert':
         bert_model = BertModel.from_pretrained('bert-base-uncased').to(args.device) # AlbertModel.from_pretrained('albert-base-v2').to(args.device)
         model = Baseline_Bert(args, bert_model).to(args.device)
@@ -28,7 +29,11 @@ def train(args, data):
         model = Baseline(args, data.WORD.vocab.vectors).to(args.device)
     
 #    ema = EMA(args.exp_decay_rate)
-
+    c_word, c_char, a_word, a_char = data.train.examples[0].c_word, data.train.examples[0].c_char, data.train.examples[0].a_word, data.train.examples[0].a_char#
+    ques, att = generate_question(args, c_word, c_char, a_word, a_char, model, data)
+    print('sample question: {}'.format(' '.join(ques)))
+    print('real question: {}'.format(data.train.examples[0].q_word))
+    
     criterion = nn.CrossEntropyLoss(ignore_index = args.pad_idx_decoder)
     optimizer = torch.optim.AdamW(model.parameters(), lr = args.learning_rate)
 
@@ -141,7 +146,7 @@ def train(args, data):
                 print('sample question: {}'.format(' '.join(ques)))
                 print('real question: {}'.format(batch.question[0]))
             else:
-                c_word, c_char, a_word, a_char = data.train.examples[0].c_word, data.train.examples[0].c_word, data.train.examples[0].c_char, data.train.examples[0].a_word, data.train.examples[0].a_char#
+                c_word, c_char, a_word, a_char = data.train.examples[0].c_word, data.train.examples[0].c_char, data.train.examples[0].a_word, data.train.examples[0].a_char#
                 ques, att = generate_question(args, c_word, c_char, a_word, a_char, model, data)
                 print('sample question: {}'.format(' '.join(ques)))
                 print('real question: {}'.format(batch.q_word))
