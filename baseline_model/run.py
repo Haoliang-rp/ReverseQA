@@ -57,9 +57,14 @@ def train(args, data):
 #        
         if present_epoch > last_epoch:
             print('epoch:', present_epoch + 1)
-            if args.encoder_type == 'bert' and present_epoch > -1:#
-                bleu_score = calculate_bleu_bert(args, data.dev, bert_model, model)
-                print('bleu score after {} epoch is {}'. format(last_epoch, bleu_score))
+            if present_epoch > -1:
+                if args.encoder_type == 'bert':
+                    bleu_score = calculate_bleu_bert(args, data.dev, bert_model, model)
+                    print('bleu score after {} epoch is {}'. format(last_epoch, bleu_score))
+                else:
+                    bleu_score = calculate_bleu(data.dev, model, args.device)
+                    print('bleu score after {} epoch is {}'. format(last_epoch, bleu_score))
+                    
         last_epoch = present_epoch
         
         optimizer.zero_grad()
@@ -136,7 +141,7 @@ def train(args, data):
                 print('sample question: {}'.format(' '.join(ques)))
                 print('real question: {}'.format(batch.question[0]))
             else:
-                c_word, c_char, a_word, a_char = data.examples[0].c_word, data.examples[0].c_char, data.examples[0].a_word, data.examples[0].a_char
+                c_word, c_char, a_word, a_char = batch.c_word, batch.c_char, batch.a_word, batch.a_char#data.examples[0]
                 ques, att = generate_question(args, c_word, c_char, a_word, a_char, model, data)
                 print('sample question: {}'.format(' '.join(ques)))
                 print('real question: {}'.format(batch.question[0]))
@@ -251,8 +256,8 @@ def calculate_bleu(data, model, device, max_len = 30):
     preds = []
     
     print('calculating bleu score')
-    for datum in tqdm(data.examples):
-        
+    for i in tqdm(range(500)):
+        datum = data.examples[i]
         c_word = datum.c_word
         c_char = datum.c_char
         a_word = datum.a_word
