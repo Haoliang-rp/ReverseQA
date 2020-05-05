@@ -317,8 +317,8 @@ def generate_question(args, c_word, c_char, a_word, a_char, model, data):
     
     model.eval()
     
-    context_word, context_char = WORD.process(c_word)[1].unsqueeze(0), CHAR.process(c_char).squeeze(2).unsqueeze(0)
-    answer_word, answer_char = WORD.process(a_word)[1].unsqueeze(0), CHAR.process(a_char).squeeze(2).unsqueeze(0)
+    context_word, context_char = WORD.process(c_word)[1].unsqueeze(0).to(device), CHAR.process(c_char).squeeze(2).unsqueeze(0).to(device)
+    answer_word, answer_char = WORD.process(a_word)[1].unsqueeze(0).to(device), CHAR.process(a_char).squeeze(2).unsqueeze(0).to(device)
     
     cmask = model.make_enc_mask(context_word).to(device)
     amask = model.make_enc_mask(answer_word).to(device)
