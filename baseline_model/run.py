@@ -15,10 +15,10 @@ from tqdm import tqdm
 import time
 import copy
 
-from transformers import BertModel, BertTokenizer
+from transformers import BertModel, BertTokenizer, BertForQuestionAnswering
 
 def train(args, data):
-    
+    QA_model = BertForQuestionAnswering.from_pretrained('bert-large-uncased-whole-word-masking-finetuned-squad').to(args.device)
     if args.encoder_type == 'bert':
         bert_model = BertModel.from_pretrained('bert-base-uncased').to(args.device) # AlbertModel.from_pretrained('albert-base-v2').to(args.device)
         model = Baseline_Bert(args, bert_model).to(args.device)
@@ -38,6 +38,7 @@ def train(args, data):
     loss, last_epoch = 0, -1
     best_dev_loss = 20000
     best_train_loss = 20000
+    ema = EMA(args.exp_decay_rate)
     
     #scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda epoch: (1 - epoch / args.epoch)**args.decaying_rate)
 #    scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=args.exp_decay_rate)
@@ -60,8 +61,9 @@ def train(args, data):
             print('epoch:', present_epoch + 1)
             if present_epoch > -1:
                 if args.encoder_type == 'bert':
-                    bleu_score = calculate_bleu_bert(args, data.dev, bert_model, model)
+                    bleu_score, overlapping_score = calculate_bleu_bert(args, data.dev, bert_model, model, QA_model)
                     print('bleu score after {} epoch is {}'. format(last_epoch, bleu_score))
+                    print('overlapping score after {} epoch is {}'. format(last_epoch, overlapping_score))
                 else:
                     bleu_score = calculate_bleu(data.dev, model, args.device)
                     print('bleu score after {} epoch is {}'. format(last_epoch, bleu_score))
@@ -115,9 +117,12 @@ def train(args, data):
         batch_loss = criterion(X, label)
         loss += batch_loss.item()
         batch_loss.backward()
-        torch.nn.utils.clip_grad_norm_(model.parameters(), args.CLIP)
         
         optimizer.step()
+        
+        for name, p in model.named_parameters():
+            if p.requires_grad: ema.update_parameter(name, p)
+        torch.nn.utils.clip_grad_norm_(model.parameters(), args.CLIP)
 #        scheduler.step()
         
 #        for name, p in model.named_parameters():
@@ -278,29 +283,44 @@ def calculate_bleu(data, model, device, max_len = 30):
     
     return bleu_score(preds, labels, max_n=2, weights=[0.5, 0.5])
 
-def calculate_bleu_bert(args, data, bert_model, model):
+def calculate_bleu_bert(args, data, bert_model, model, QA_model):
     labels = []
     preds = []
 
     print('calculating bleu score for 500 questions')
-
+    num = 0
     for i in tqdm(range(500)):
         example = data.examples[i]
         answer = example.answer
         context = example.context
         question = example.question
-        s_idx = example.s_idx
-        e_idx = example.e_idx
+        s_idx_true = example.s_idx
+        e_idx_true = example.e_idx
 #        ques_token = args.decoder_tokenizer.encode_plus(question, add_special_tokens=False, pad_to_max_length=False, return_tensors="pt")
 #        ques_token = args.decoder_tokenizer.convert_ids_to_tokens(ques_token['input_ids'][0])
         ques_token = args.decoder_tokenizer.tokenize(question)
         
-        pred, _ = generate_question_bert_enc(args, answer, context, s_idx, e_idx, bert_model, model)
+        pred, _ = generate_question_bert_enc(args, answer, context, s_idx_true, e_idx_true, bert_model, model)
+        
+        # calculatiing overlap score
+        generated_question = ' '.join(pred)
+        
+        encoding = args.tokenizer.encode_plus(generated_question, context)
+        input_ids, token_type_ids = encoding["input_ids"], encoding["token_type_ids"]
+        start_scores, end_scores = QA_model(torch.tensor([input_ids]), token_type_ids=torch.tensor([token_type_ids]))
 
+        tokenized_ques = args.tokenizer.tokenize(generated_question)
+        cur_question_len = len(tokenized_ques)            
+        s_idx = torch.argmax(start_scores) - cur_question_len - 2
+        e_idx = torch.argmax(end_scores) - cur_question_len - 2
+        
+        score = calculate_overlapping_score(s_idx_true.item(), e_idx_true.item()+1, s_idx.item(), e_idx.item()+1)
+        num += 1
+        
         preds.append(pred)
         labels.append([ques_token])
     
-    return bleu_score(preds, labels, max_n=2, weights=[0.5, 0.5])
+    return bleu_score(preds, labels, max_n=2, weights=[0.5, 0.5]), score / num
                
 def generate_question(args, c_word, c_char, a_word, a_char, model, data):
     '''
@@ -422,28 +442,38 @@ def generate_question_bert_enc(args, answer, context, s_idx, e_idx, bert_model, 
         qus = args.decoder_tokenizer.convert_ids_to_tokens(word_idxes)
         return qus[1:i+1], attentions
 
-#class EMA(object):
-#    def __init__(self, decay):
-#        self.decay = decay
-#        self.shadows = {}
-#        self.devices = {}
-#
-#    def __len__(self):
-#        return len(self.shadows)
-#
-#    def get(self, name: str):
-#        return self.shadows[name].to(self.devices[name])
-#
-#    def set(self, name: str, param: nn.Parameter):
-#        self.shadows[name] = param.data.to('cpu').clone()
-#        self.devices[name] = param.data.device
-#
-#    def update_parameter(self, name: str, param: nn.Parameter):
-#        if name in self.shadows:
-#            data = param.data
-#            new_shadow = self.decay * data + (1.0 - self.decay) * self.get(name)
-#            param.data.copy_(new_shadow)
-#            self.shadows[name] = new_shadow.to('cpu').clone()
+
+def calculate_overlapping_score(s_idx_true, e_idx_true, s_idx_g, e_idx_g):
+    x = range(s_idx_true, e_idx_true)
+    y = range(s_idx_g, e_idx_g)
+    
+    xs = set(x)
+    
+    return len(xs.intersection(y)) / len(xs.union(y))
+
+
+class EMA(object):
+    def __init__(self, decay):
+        self.decay = decay
+        self.shadows = {}
+        self.devices = {}
+
+    def __len__(self):
+        return len(self.shadows)
+
+    def get(self, name: str):
+        return self.shadows[name].to(self.devices[name])
+
+    def set(self, name: str, param: nn.Parameter):
+        self.shadows[name] = param.data.to('cpu').clone()
+        self.devices[name] = param.data.device
+
+    def update_parameter(self, name: str, param: nn.Parameter):
+        if name in self.shadows:
+            data = param.data
+            new_shadow = self.decay * data + (1.0 - self.decay) * self.get(name)
+            param.data.copy_(new_shadow)
+            self.shadows[name] = new_shadow.to('cpu').clone()
 
 def main():
     parser = argparse.ArgumentParser()
@@ -496,7 +526,7 @@ def main():
         setattr(args, 'output_dim', args.tokenizer.vocab_size)
         setattr(args, 'hidden_size', 768 // 2) # bert have size 128 for embedding
     else:
-        setattr(args, 'd_model', 768 // args.n_head) # 96
+        setattr(args, 'd_model', 96) # 768 // args.n_head
         setattr(args, 'char_vocab_size', len(data.CHAR.vocab))
         setattr(args, 'word_vocab_size', len(data.WORD.vocab))
         setattr(args, 'pad_idx_encoder', data.WORD.vocab.stoi[data.WORD.pad_token])
