@@ -460,8 +460,7 @@ def main():
     
     parser.add_argument('--learning-rate', default=0.0005, type=float)
     parser.add_argument('--exp-decay-rate', default=0.999, type=float)
-    
-    parser.add_argument('--word-dim', default=100, type=int)
+
     parser.add_argument('--n-head', default=4, type=int)
     
     parser.add_argument('--DEC-LAYERS', default=3, type=int)
@@ -473,12 +472,13 @@ def main():
     parser.add_argument('--max-len-char', default=30, type=int)
     
     parser.add_argument('--kernel-size', default=5, type=int)
-    parser.add_argument('--CLIP', default=0.25, type=int)
+    parser.add_argument('--CLIP', default=1, type=int)
     
     parser.add_argument('--print-freq', default=300, type=int)
     parser.add_argument('--save-freq', default=300, type=int)
     parser.add_argument('--epoch', default=18, type=int)
 #    parser.add_argument('--decaying-rate', default=0.98, type=int)
+    
     parser.add_argument('--cur-model-path', default='saved_models/BASE_bert_09:22:02.pt')
     parser.add_argument('--from-prev', default=False)
     
@@ -505,7 +505,8 @@ def main():
         setattr(args, 'char_dim', 8)
         setattr(args, 'char_channel_width', 3)
         setattr(args, 'char_channel_size', 100)
-        setattr(args, 'conv_num', 4)
+        setattr(args, 'conv_num', 8)
+        setattr(args, 'word_dim', 100)
 #        setattr(args, 'dataset_file', '.data/squad/{}'.format(args.dev_file))
         
     setattr(args, 'prediction_file', 'prediction{}.out'.format(args.gpu))
