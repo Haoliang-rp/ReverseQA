@@ -460,7 +460,8 @@ def main():
     
     parser.add_argument('--learning-rate', default=0.0005, type=float)
     parser.add_argument('--exp-decay-rate', default=0.999, type=float)
-
+    
+    parser.add_argument('--word-dim', default=100, type=int)
     parser.add_argument('--n-head', default=4, type=int)
     
     parser.add_argument('--DEC-LAYERS', default=3, type=int)
@@ -506,7 +507,7 @@ def main():
         setattr(args, 'char_channel_width', 3)
         setattr(args, 'char_channel_size', 100)
         setattr(args, 'conv_num', 8)
-        setattr(args, 'word_dim', 100)
+        setattr(args, 'word_dim', 8)
 #        setattr(args, 'dataset_file', '.data/squad/{}'.format(args.dev_file))
         
     setattr(args, 'prediction_file', 'prediction{}.out'.format(args.gpu))
