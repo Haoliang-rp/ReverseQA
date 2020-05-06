@@ -507,7 +507,6 @@ def main():
         setattr(args, 'char_channel_width', 3)
         setattr(args, 'char_channel_size', 100)
         setattr(args, 'conv_num', 8)
-        setattr(args, 'word_dim', 8)
 #        setattr(args, 'dataset_file', '.data/squad/{}'.format(args.dev_file))
         
     setattr(args, 'prediction_file', 'prediction{}.out'.format(args.gpu))

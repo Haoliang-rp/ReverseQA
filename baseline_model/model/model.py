@@ -35,9 +35,6 @@ class Embedding(nn.Module):
         # word_emb
         # pre_trained GLoVe
         self.word_emb = nn.Embedding.from_pretrained(pretrained, freeze=True)
-        print(args.hidden_size)
-        print(args.char_channel_size)
-        print(args.word_dim)
         assert args.hidden_size * 2 == (args.char_channel_size + args.word_dim)
         
         # high way network
