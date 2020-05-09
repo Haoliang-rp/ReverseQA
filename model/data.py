@@ -37,7 +37,7 @@ class SQuAD():
                 self.preprocess_file_bert('{}/{}'.format(path, args.dev_file))
         else:
             if not os.path.exists('{}/{}l'.format(path, args.train_file)):
-                self.preprocess_file_bert('{}/{}'.format(path, args.train_file), create_question=True)
+                self.preprocess_file('{}/{}'.format(path, args.train_file), create_question=True)
             if not os.path.exists('{}/{}l'.format(path, args.dev_file)):
                 self.preprocess_file('{}/{}'.format(path, args.dev_file))
 
