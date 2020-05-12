@@ -402,6 +402,7 @@ class Baseline_Bert(nn.Module):
         super().__init__()
         self.args = args
         self.device = args.device
+        self.dropout = args.dropout
         self.hid_dim = args.d_model*args.n_head
         # add extra encoding
         self.self_att = MultiHeadAttention(self.hid_dim, args.n_head, args.dropout, args.device)
@@ -429,7 +430,7 @@ class Baseline_Bert(nn.Module):
         out, _ = self.self_att(encoded, encoded, encoded, mask)
         out = out + encoded
 
-        out = F.dropout(out, p=dropout, training=self.training)
+        out = F.dropout(out, p=self.dropout, training=self.training)
         out = self.norme(out)
 
         out = self.fc(out)

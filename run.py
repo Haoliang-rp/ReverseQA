@@ -55,7 +55,7 @@ def train(args, data):
 #
         if present_epoch > last_epoch:
             print('epoch:', present_epoch + 1)
-            if present_epoch > -1:
+            if present_epoch > 0:
                 if args.encoder_type == 'bert':
                     bleu_score, overlapping_score = calculate_bleu_bert(args, data.dev, bert_model, model, QA_model)
                     print('bleu score after {} epoch is {}'. format(last_epoch, bleu_score))
