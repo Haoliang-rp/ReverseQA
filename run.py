@@ -291,7 +291,7 @@ def calculate_bleu_bert(args, data, bert_model, model, QA_model):
         s_idx = torch.argmax(start_scores) - cur_question_len - 2
         e_idx = torch.argmax(end_scores) - cur_question_len - 2
 
-        score = calculate_overlapping_score(s_idx_true.item(), e_idx_true.item()+1, s_idx.item(), e_idx.item()+1)
+        score = calculate_overlapping_score(s_idx_true, e_idx_true+1, s_idx.item(), e_idx.item()+1)
         num += 1
 
         preds.append(pred)
