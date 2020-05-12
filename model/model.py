@@ -408,6 +408,8 @@ class Baseline_Bert(nn.Module):
         self.self_att = MultiHeadAttention(self.hid_dim, args.n_head, args.dropout, args.device)
         self.norme = nn.LayerNorm(self.hid_dim)
 
+        self.fc = nn.Linear(self.hid_dim, self.hid_dim, bias=True)
+
         # decoder
         self.decoder = Decoder(args.output_dim, n_layers=args.DEC_LAYERS, hidden_size=args.hidden_size, d_model=args.d_model, n_head=args.n_head, dropout=args.dropout, max_length=args.max_len_question+10, device=self.device).to(self.device)
         self.emb = bert_model.get_input_embeddings().to(self.device)
