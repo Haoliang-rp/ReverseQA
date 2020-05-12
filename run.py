@@ -475,8 +475,8 @@ def main():
     parser.add_argument('--kernel-size', default=5, type=int)
     parser.add_argument('--CLIP', default=1, type=int)
 
-    parser.add_argument('--print-freq', default=300, type=int)
-    parser.add_argument('--save-freq', default=300, type=int)
+    parser.add_argument('--print-freq', default=100, type=int)
+    parser.add_argument('--save-freq', default=100, type=int)
     parser.add_argument('--epoch', default=18, type=int)
 #    parser.add_argument('--decaying-rate', default=0.98, type=int)
 
