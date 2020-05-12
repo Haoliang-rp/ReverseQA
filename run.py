@@ -284,7 +284,7 @@ def calculate_bleu_bert(args, data, bert_model, model, QA_model):
 
         encoding = args.tokenizer.encode_plus(generated_question, context)
         input_ids, token_type_ids = encoding["input_ids"], encoding["token_type_ids"]
-        start_scores, end_scores = QA_model(torch.tensor([input_ids]), token_type_ids=torch.tensor([token_type_ids]))
+        start_scores, end_scores = QA_model(torch.tensor([input_ids]).to(args.device), token_type_ids=torch.tensor([token_type_ids]).to(args.device))
 
         tokenized_ques = args.tokenizer.tokenize(generated_question)
         cur_question_len = len(tokenized_ques)
