@@ -405,8 +405,11 @@ class Baseline_Bert(nn.Module):
         self.dropout = args.dropout
         self.hid_dim = args.d_model*args.n_head
         # add extra encoding
-        self.self_att = MultiHeadAttention(self.hid_dim, args.n_head, args.dropout, args.device)
-        self.norme = nn.LayerNorm(self.hid_dim)
+        self.self_att1 = MultiHeadAttention(self.hid_dim, args.n_head, args.dropout, args.device)
+        self.norme1 = nn.LayerNorm(self.hid_dim)
+
+        self.self_att2 = MultiHeadAttention(self.hid_dim, args.n_head, args.dropout, args.device)
+        self.norme2 = nn.LayerNorm(self.hid_dim)
 
         self.fc = nn.Linear(self.hid_dim, self.hid_dim, bias=True)
 
@@ -429,11 +432,19 @@ class Baseline_Bert(nn.Module):
         return trg_mask
 
     def forward(self, encoded, mask, question_input_ids, cmask):
-        out, _ = self.self_att(encoded, encoded, encoded, mask)
-        out = out + encoded
+        res = encoded
+        out, _ = self.self_att1(encoded, encoded, encoded, mask)
+        out = out + res
 
         out = F.dropout(out, p=self.dropout, training=self.training)
-        out = self.norme(out)
+        out = self.norme1(out)
+
+        res = out
+        out, _ = self.self_att2(out, out, out, mask)
+        out = out + res
+
+        out = F.dropout(out, p=self.dropout, training=self.training)
+        out = self.norme2(out)
 
         out = self.fc(out)
         out = F.relu(out)
