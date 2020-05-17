@@ -405,13 +405,13 @@ class Baseline_Bert(nn.Module):
         self.dropout = args.dropout
         self.hid_dim = args.d_model*args.n_head
         # add extra encoding
-        self.self_att1 = MultiHeadAttention(self.hid_dim, args.n_head, args.dropout, args.device)
-        self.norme1 = nn.LayerNorm(self.hid_dim)
-
-        self.self_att2 = MultiHeadAttention(self.hid_dim, args.n_head, args.dropout, args.device)
-        self.norme2 = nn.LayerNorm(self.hid_dim)
-
-        self.fc = nn.Linear(self.hid_dim, self.hid_dim, bias=True)
+        # self.self_att1 = MultiHeadAttention(self.hid_dim, args.n_head, args.dropout, args.device)
+        # self.norme1 = nn.LayerNorm(self.hid_dim)
+        #
+        # self.self_att2 = MultiHeadAttention(self.hid_dim, args.n_head, args.dropout, args.device)
+        # self.norme2 = nn.LayerNorm(self.hid_dim)
+        #
+        # self.fc = nn.Linear(self.hid_dim, self.hid_dim, bias=True)
 
         # decoder
         self.decoder = Decoder(args.output_dim, n_layers=args.DEC_LAYERS, hidden_size=args.hidden_size, d_model=args.d_model, n_head=args.n_head, dropout=args.dropout, max_length=args.max_len_question+10, device=self.device).to(self.device)
@@ -432,26 +432,26 @@ class Baseline_Bert(nn.Module):
         return trg_mask
 
     def forward(self, encoded, mask, question_input_ids, cmask):
-        res = encoded
-        out, _ = self.self_att1(encoded, encoded, encoded, mask)
-        out = out + res
-
-        out = F.dropout(out, p=self.dropout, training=self.training)
-        out = self.norme1(out)
-
-        res = out
-        out, _ = self.self_att2(out, out, out, mask)
-        out = out + res
-
-        out = F.dropout(out, p=self.dropout, training=self.training)
-        out = self.norme2(out)
-
-        out = self.fc(out)
-        out = F.relu(out)
+        # res = encoded
+        # out, _ = self.self_att1(encoded, encoded, encoded, mask)
+        # out = out + res
+        #
+        # out = F.dropout(out, p=self.dropout, training=self.training)
+        # out = self.norme1(out)
+        #
+        # res = out
+        # out, _ = self.self_att2(out, out, out, mask)
+        # out = out + res
+        #
+        # out = F.dropout(out, p=self.dropout, training=self.training)
+        # out = self.norme2(out)
+        #
+        # out = self.fc(out)
+        # out = F.relu(out)
 
         question_word = question_input_ids[:,:-1]
         trg_mask = self.make_dec_mask(question_word).to(self.device)
         Q_emb = self.emb(question_word)
-        output, attention = self.decoder(Q_emb, out, trg_mask, cmask)# encoded
+        output, attention = self.decoder(Q_emb, encoded, trg_mask, cmask)# out
 
         return output, attention

@@ -46,6 +46,7 @@ def train(args, data):
     if args.encoder_type == 'bert': bert_model.eval()
 
     print('training')
+    if fine_tune_bert: print('fine tune bert')
     for i, batch in enumerate(tqdm(data.train_iter)):
         start_time = time.time()
 
@@ -74,7 +75,7 @@ def train(args, data):
 
             question_batch_in = args.decoder_tokenizer.batch_encode_plus(batch.question, add_special_tokens=True, pad_to_max_length=True, return_tensors="pt")
 
-            with torch.no_grad():
+            if fine_tune_bert:
                 input_ids_tensor = training_batch_in['input_ids'].to(args.device)
                 attention_mask_tensor = training_batch_in['attention_mask'].to(args.device)
                 token_type_ids_tensor = training_batch_in['token_type_ids'].to(args.device)
@@ -89,6 +90,22 @@ def train(args, data):
 
                 question_input_ids = question_batch_in['input_ids'].to(args.device)
                 if question_input_ids.size(1) > args.max_len_question + 9: continue
+            else:
+                with torch.no_grad():
+                    input_ids_tensor = training_batch_in['input_ids'].to(args.device)
+                    attention_mask_tensor = training_batch_in['attention_mask'].to(args.device)
+                    token_type_ids_tensor = training_batch_in['token_type_ids'].to(args.device)
+
+                    cmask = copy.deepcopy(token_type_ids_tensor).unsqueeze(1).unsqueeze(2)#.unsqueeze(2).repeat(1, 1, 768)
+
+                    token_type_ids_tensor = add_pos_info(token_type_ids_tensor, batch.s_idx, batch.e_idx, batch.context, args.tokenizer)
+
+                    if input_ids_tensor.size(1) > 511: continue
+                    outputs = bert_model(input_ids_tensor, attention_mask_tensor, token_type_ids_tensor)
+                    encoded = outputs[0]
+
+                    question_input_ids = question_batch_in['input_ids'].to(args.device)
+                    if question_input_ids.size(1) > args.max_len_question + 9: continue
 
             mask = attention_mask_tensor.unsqueeze(1).unsqueeze(2)
             X, _ = model(encoded, mask, question_input_ids, cmask)
@@ -450,9 +467,9 @@ def main():
 
     parser.add_argument('--encoder-type', default='bert')
 
-    parser.add_argument('--dev-batch-size', default=100, type=int)
+    parser.add_argument('--dev-batch-size', default=30, type=int)
     parser.add_argument('--dev-file', default='dev-v2.0.json')
-    parser.add_argument('--train-batch-size', default=60, type=int)
+    parser.add_argument('--train-batch-size', default=30, type=int)
     parser.add_argument('--train-file', default='train-v2.0.json')
 
     parser.add_argument('--dropout', default=0.2, type=float)
@@ -482,6 +499,7 @@ def main():
 
     parser.add_argument('--cur-model-path', default='saved_models/BASE_bert_09:22:02.pt')
     parser.add_argument('--from-prev', default=False)
+    parser.add_argument('--fine-tune-bert', default=True)
 
     args = parser.parse_args()
     setattr(args, 'device', torch.device("cuda:{}".format(args.gpu) if torch.cuda.is_available() else "cpu"))#'cpu'
