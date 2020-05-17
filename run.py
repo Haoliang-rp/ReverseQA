@@ -451,7 +451,7 @@ def generate_question_bert_enc_beam_search(args, answer, context, s_idx, e_idx, 
         attention_mask_tensor = test_pair_in['attention_mask'].to(device)
         token_type_ids_tensor = test_pair_in['token_type_ids'].to(device)
 
-        context_token_len = len(tokenizer.tokenize(context))
+        context_token_len = len(args.tokenizer.tokenize(context))
 
         cmask = copy.deepcopy(token_type_ids_tensor).unsqueeze(1).unsqueeze(2)
 
