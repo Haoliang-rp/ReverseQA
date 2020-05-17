@@ -549,9 +549,9 @@ def main():
 
     parser.add_argument('--encoder-type', default='bert')
 
-    parser.add_argument('--dev-batch-size', default=30, type=int)
+    parser.add_argument('--dev-batch-size', default=20, type=int)
     parser.add_argument('--dev-file', default='dev-v2.0.json')
-    parser.add_argument('--train-batch-size', default=30, type=int)
+    parser.add_argument('--train-batch-size', default=20, type=int)
     parser.add_argument('--train-file', default='train-v2.0.json')
 
     parser.add_argument('--dropout', default=0.2, type=float)
