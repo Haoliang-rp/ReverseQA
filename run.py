@@ -46,7 +46,7 @@ def train(args, data):
     if args.encoder_type == 'bert': bert_model.eval()
 
     print('training')
-    if fine_tune_bert: print('fine tune bert')
+    if args.fine_tune_bert: print('fine tune bert')
     for i, batch in enumerate(tqdm(data.train_iter)):
         start_time = time.time()
 
@@ -75,7 +75,7 @@ def train(args, data):
 
             question_batch_in = args.decoder_tokenizer.batch_encode_plus(batch.question, add_special_tokens=True, pad_to_max_length=True, return_tensors="pt")
 
-            if fine_tune_bert:
+            if args.fine_tune_bert:
                 input_ids_tensor = training_batch_in['input_ids'].to(args.device)
                 attention_mask_tensor = training_batch_in['attention_mask'].to(args.device)
                 token_type_ids_tensor = training_batch_in['token_type_ids'].to(args.device)
