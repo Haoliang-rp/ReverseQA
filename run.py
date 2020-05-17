@@ -154,7 +154,10 @@ def train(args, data):
 
             if args.encoder_type == 'bert':
                 ques, att = generate_question_bert_enc(args, batch.answer[0], batch.context[0], batch.s_idx[0], batch.e_idx[0], bert_model, model)
+                ques_beam = generate_question_bert_enc_beam_search(args, batch.answer[0], batch.context[0], batch.s_idx[0], batch.e_idx[0], bert_model, model, args.beam_size)
                 print('sample question: {}'.format(' '.join(ques)))
+                print('sample question beam search: ')
+                print(ques_beam)
                 print('real question: {}'.format(batch.question[0]))
             else:
 
@@ -429,6 +432,82 @@ def generate_question_bert_enc(args, answer, context, s_idx, e_idx, bert_model, 
         qus = args.decoder_tokenizer.convert_ids_to_tokens(word_idxes)
         return qus[1:i+1], attentions
 
+def generate_question_bert_enc_beam_search(args, tokenizer, answer, context, s_idx, e_idx, bert_model, model, k, max_len_question=33):
+    '''
+    answer: untokenized string
+    context: untokenized string
+    k: beam size
+    '''
+    device = args.device
+    bert_model.eval()
+    model.eval()
+    test_pair_in = args.tokenizer.encode_plus(answer, context, add_special_tokens=True, pad_to_max_length=True, return_tensors="pt")
+
+    with torch.no_grad():
+        input_ids_tensor = test_pair_in['input_ids'].to(device)
+        attention_mask_tensor = test_pair_in['attention_mask'].to(device)
+        token_type_ids_tensor = test_pair_in['token_type_ids'].to(device)
+
+        context_token_len = len(tokenizer.tokenize(context))
+
+        cmask = copy.deepcopy(token_type_ids_tensor).unsqueeze(1).unsqueeze(2)
+
+        token_type_ids_tensor[0][-context_token_len+s_idx:-context_token_len+e_idx+1] = \
+        torch.zeros_like(token_type_ids_tensor[0][-context_token_len+s_idx:-context_token_len+e_idx+1])
+
+        outputs = bert_model(input_ids_tensor, attention_mask_tensor, token_type_ids_tensor)
+        encoded = outputs[0]
+
+        word_idxes = [([args.decoder_tokenizer.cls_token_id], 1)]
+
+        ques = []
+        for i in range(max_len_question+2):
+            word_tensor = [word_idx for word_idx, prob in word_idxes]
+
+            word_tensor = torch.LongTensor(word_tensor).to(device)
+            word_mask = model.make_dec_mask(word_tensor)
+#             print(word_tensor.size())
+            Q_emb = model.emb(word_tensor)
+#             print(Q_emb.size())
+            encoded = outputs[0].repeat(word_tensor.size(0), 1, 1)
+#             print(encoded.size())
+            with torch.no_grad():
+                out, attention = model.decoder(Q_emb, encoded, word_mask, cmask)
+
+            out = F.softmax(out, dim=2)
+            candiate = []
+            for j in range(len(word_tensor)):
+                idx = word_idxes[j][0]
+                prev_prob = word_idxes[j][1]
+
+                for q in range(out.size(2)):
+                    candiate.append((idx+[q], prev_prob * -math.log(out[j,-1,q].item())))
+            candiate.sort(key=lambda x:x[1])
+            word_idxes = candiate[:k]
+
+            dummy = copy.deepcopy(word_idxes)
+            for item in dummy:
+                word_idx, prob = item
+                if word_idx[-1] == args.decoder_tokenizer.sep_token_id:
+                    ques.append(word_idx)
+                    word_idxes.remove(item)
+
+            if not word_idxes or len(ques) > k+2: break
+
+        if len(ques) < k:
+            for word_idx, prob in word_idxes:
+                ques.append(word_idx)
+
+        print(ques)
+        res = []
+        for que in ques:
+            if que[-1] == args.decoder_tokenizer.sep_token_id:
+                word = args.decoder_tokenizer.convert_ids_to_tokens(que)[1:-1]
+                res.append(' '.join(word))
+            else:
+                word = args.decoder_tokenizer.convert_ids_to_tokens(que)[1:]
+                res.append(' '.join(word))
+        return res
 
 def calculate_overlapping_score(s_idx_true, e_idx_true, s_idx_g, e_idx_g):
     x = range(s_idx_true, e_idx_true)
@@ -500,6 +579,7 @@ def main():
     parser.add_argument('--cur-model-path', default='saved_models/BASE_bert_09:22:02.pt')
     parser.add_argument('--from-prev', default=False)
     parser.add_argument('--fine-tune-bert', default=True)
+    parser.add_argument('--beam-size', default=3, type=int)
 
     args = parser.parse_args()
     setattr(args, 'device', torch.device("cuda:{}".format(args.gpu) if torch.cuda.is_available() else "cpu"))#'cpu'
