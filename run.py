@@ -139,8 +139,6 @@ def train(args, data):
             if p.requires_grad: ema.update_parameter(name, p)
         torch.nn.utils.clip_grad_norm_(model.parameters(), args.CLIP)
 
-        ques_beam = generate_question_bert_enc_beam_search(args, batch.answer[0], batch.context[0], batch.s_idx[0], batch.e_idx[0], bert_model, model, args.beam_size)
-        print(ques_beam)
         case = 0
         if (i + 1) % args.print_freq == 0:
             if args.encoder_type == 'bert':
@@ -160,9 +158,10 @@ def train(args, data):
                 ques, att = generate_question_bert_enc(args, batch.answer[0], batch.context[0], batch.s_idx[0], batch.e_idx[0], bert_model, model)
                 ques_beam = generate_question_bert_enc_beam_search(args, batch.answer[0], batch.context[0], batch.s_idx[0], batch.e_idx[0], bert_model, model, args.beam_size)
                 print('sample question: {}'.format(' '.join(ques)))
-                print('sample question beam search: ')
-                print(ques_beam)
                 print('real question: {}'.format(batch.question[0]))
+                print('sample question beam search: ')
+                for que in ques_beam:
+                    print(que)
             else:
 
                 c_word, c_char, a_word, a_char = data.dev.examples[case].c_word, data.dev.examples[case].c_char, data.dev.examples[case].a_word, data.dev.examples[case].a_char#
@@ -503,7 +502,6 @@ def generate_question_bert_enc_beam_search(args, answer, context, s_idx, e_idx, 
             for word_idx, prob in word_idxes:
                 ques.append(word_idx)
 
-        print(ques)
         res = []
         for que in ques:
             if que[-1] == args.decoder_tokenizer.sep_token_id:
