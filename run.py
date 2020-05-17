@@ -137,6 +137,8 @@ def train(args, data):
             if p.requires_grad: ema.update_parameter(name, p)
         torch.nn.utils.clip_grad_norm_(model.parameters(), args.CLIP)
 
+        ques_beam = generate_question_bert_enc_beam_search(args, batch.answer[0], batch.context[0], batch.s_idx[0], batch.e_idx[0], bert_model, model, args.beam_size)
+        print(ques_beam)
         case = 0
         if (i + 1) % args.print_freq == 0:
             if args.encoder_type == 'bert':
