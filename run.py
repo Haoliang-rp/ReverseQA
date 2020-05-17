@@ -14,6 +14,7 @@ from torchtext.data.metrics import bleu_score
 from tqdm import tqdm
 import time
 import copy
+import torch.nn.functional as F
 
 from transformers import BertModel, BertTokenizer, BertForQuestionAnswering
 
