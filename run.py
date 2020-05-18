@@ -84,7 +84,8 @@ def train(args, data):
 
                 cmask = copy.deepcopy(token_type_ids_tensor).unsqueeze(1).unsqueeze(2)#.unsqueeze(2).repeat(1, 1, 768)
 
-                token_type_ids_tensor = add_pos_info(token_type_ids_tensor, batch.s_idx, batch.e_idx, batch.context, args.tokenizer)
+                # pos?
+                # token_type_ids_tensor = add_pos_info(token_type_ids_tensor, batch.s_idx, batch.e_idx, batch.context, args.tokenizer)
 
                 if input_ids_tensor.size(1) > 511: continue
                 outputs = bert_model(input_ids_tensor, attention_mask_tensor, token_type_ids_tensor)
@@ -215,7 +216,8 @@ def test(args, model, data, bert_model=None):#, ema
 
                 cmask = copy.deepcopy(token_type_ids_tensor).unsqueeze(1).unsqueeze(2)
 
-                token_type_ids_tensor = add_pos_info(token_type_ids_tensor, batch.s_idx, batch.e_idx, batch.context, args.tokenizer)
+                # pos?
+                # token_type_ids_tensor = add_pos_info(token_type_ids_tensor, batch.s_idx, batch.e_idx, batch.context, args.tokenizer)
 
                 question_input_ids = question_batch_in['input_ids'].to(args.device)
 
