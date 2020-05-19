@@ -45,7 +45,11 @@ def train(args, data):
 #    test_bound = 2
 #    iterator = data.train_iter
     model.train()
-    if args.encoder_type == 'bert': bert_model.eval()
+    if args.encoder_type == 'bert': 
+        if args.fine_tune_bert:
+            bert_model.train()
+        else:
+            bert_model.eval()
 
     print('training')
     if args.fine_tune_bert: print('fine tune bert')
