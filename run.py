@@ -37,9 +37,9 @@ def train(args, data):
     if args.fine_tune_bert:
         print('fine tune bert')
         optimizer = torch.optim.AdamW([
-        {'params':model.parameters()},
+        {'params':model.parameters(), 'lr':lr = args.learning_rate},
         {'params':bert_model.parameters(), 'lr':args.learning_rate_bert}
-        ], lr = args.learning_rate)
+        ])
         # optimizer = torch.optim.AdamW(list(model.parameters()) + list(bert_model.parameters()), lr = args.learning_rate)
     else:
         optimizer = torch.optim.AdamW(model.parameters(), lr = args.learning_rate)
