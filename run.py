@@ -596,8 +596,8 @@ def main():
     parser.add_argument('--epoch', default=18, type=int)
 #    parser.add_argument('--decaying-rate', default=0.98, type=int)
 
-    parser.add_argument('--cur-model-path', default='saved_models/BASE_bert_09:22:02.pt')
-    parser.add_argument('--from-prev', default=False)
+    parser.add_argument('--cur-model-path', default='saved_models/BASE_bert_5_4.pt')
+    parser.add_argument('--from-prev', default=True)
     parser.add_argument('--fine-tune-bert', default=True)
     parser.add_argument('--beam-size', default=3, type=int)
 
