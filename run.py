@@ -580,7 +580,7 @@ def main():
     parser.add_argument('--word-dim', default=100, type=int)
     parser.add_argument('--n-head', default=4, type=int)
 
-    parser.add_argument('--DEC-LAYERS', default=3, type=int)
+    parser.add_argument('--DEC-LAYERS', default=4, type=int)
 #    parser.add_argument('--DEC-HEADS', default=4, type=int)
 
     parser.add_argument('--max-len-context', default=300, type=int)
