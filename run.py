@@ -33,7 +33,12 @@ def train(args, data):
 #    ema = EMA(args.exp_decay_rate)
 
     criterion = nn.CrossEntropyLoss(ignore_index = args.pad_idx_decoder)
-    optimizer = torch.optim.AdamW(model.parameters(), lr = args.learning_rate)
+
+    if args.fine_tune_bert:
+        print('fine tune bert')
+        optimizer = torch.optim.AdamW(list(model.parameters()) + list(bert_model.parameters()), lr = args.learning_rate)
+    else:
+        optimizer = torch.optim.AdamW(model.parameters(), lr = args.learning_rate)
 
     writer = SummaryWriter(log_dir='runs/' + args.model_time)
 
@@ -45,14 +50,14 @@ def train(args, data):
 #    test_bound = 2
 #    iterator = data.train_iter
     model.train()
-    if args.encoder_type == 'bert': 
+    if args.encoder_type == 'bert':
         if args.fine_tune_bert:
             bert_model.train()
         else:
             bert_model.eval()
 
     print('training')
-    if args.fine_tune_bert: print('fine tune bert')
+
     for i, batch in enumerate(tqdm(data.train_iter)):
         start_time = time.time()
 
