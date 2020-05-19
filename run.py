@@ -36,7 +36,11 @@ def train(args, data):
 
     if args.fine_tune_bert:
         print('fine tune bert')
-        optimizer = torch.optim.AdamW(list(model.parameters()) + list(bert_model.parameters()), lr = args.learning_rate)
+        optimizer = torch.optim.AdamW([
+        {'params':model.parameters()}
+        {'params':bert_model.parameters(), 'lr' = args.learning_rate_bert}
+        ], lr = args.learning_rate)
+        # optimizer = torch.optim.AdamW(list(model.parameters()) + list(bert_model.parameters()), lr = args.learning_rate)
     else:
         optimizer = torch.optim.AdamW(model.parameters(), lr = args.learning_rate)
 
@@ -575,6 +579,7 @@ def main():
     parser.add_argument('--gpu', default=0, type=int)
 
     parser.add_argument('--learning-rate', default=0.0005, type=float)
+    parser.add_argument('--learning-rate-bert', default=0.00002, type=float)
     parser.add_argument('--exp-decay-rate', default=0.999, type=float)
 
     parser.add_argument('--word-dim', default=100, type=int)
