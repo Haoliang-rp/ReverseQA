@@ -578,8 +578,8 @@ def main():
     parser.add_argument('--dropout', default=0.2, type=float)
     parser.add_argument('--gpu', default=0, type=int)
 
-    parser.add_argument('--learning-rate', default=0.0005, type=float)
-    parser.add_argument('--learning-rate-bert', default=0.00002, type=float)
+    parser.add_argument('--learning-rate', default=0.0002, type=float)
+    parser.add_argument('--learning-rate-bert', default=0.000001, type=float)
     parser.add_argument('--exp-decay-rate', default=0.999, type=float)
 
     parser.add_argument('--word-dim', default=100, type=int)
